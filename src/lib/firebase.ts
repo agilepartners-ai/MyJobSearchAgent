@@ -4,7 +4,7 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAAvFzIm85R0C9Y5_AnhqpU7enInd2jwJU",
+  apiKey: "",
   authDomain: "myjobsearchagent.firebaseapp.com",
   projectId: "myjobsearchagent",
   storageBucket: "myjobsearchagent.firebasestorage.app",
