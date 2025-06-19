@@ -101,8 +101,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleJobSearch = () => {
-    setShowJobSearchModal(true);
-  };
+    setShowJobSearchModal(true);  };
 
   const handleJobSearchFormChange = (form: any) => {
     setSearchForm(form);
@@ -362,8 +361,7 @@ const Dashboard: React.FC = () => {
           searchError={searchError}
           onClose={() => setShowJobSearchModal(false)}
           onFormChange={handleJobSearchFormChange}
-          onSearch={handleJobSearchSubmit}
-          onSaveJob={handleSaveJobFromSearch}
+          onSearch={handleJobSearchSubmit}          onSaveJob={handleSaveJobFromSearch}
           onSaveMultipleJobs={handleSaveMultipleJobsFromSearch}
           onClear={handleClearJobSearch}
         />

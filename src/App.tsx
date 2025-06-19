@@ -12,7 +12,9 @@ import RegisterForm from './components/auth/RegisterForm';
 import ForgotPassword from './components/auth/ForgotPassword';
 import VerifyPhone from './components/auth/VerifyPhone';
 import Dashboard from './components/dashboard/DashboardMain';
+import MockInterviewPage from './components/dashboard/MockInterviewPage';
 import { useAuth } from './hooks/useAuth';
+import { TavusProvider } from './contexts/TavusContext';
 
 function App() {
   useEffect(() => {
@@ -21,33 +23,34 @@ function App() {
     // Force dark mode
     document.documentElement.classList.add('dark');
   }, []);
-
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/register" element={<RegisterForm />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-phone" element={<VerifyPhone />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route
-          path="/"
-          element={
-            <div className="min-h-screen bg-white dark:bg-gray-900">
-              <Header />
-              <main>
-                <Hero />
-                <Services />
-                <Testimonials />
-                <Team />
-                <Contact />
-              </main>
-              <Footer />
-            </div>
-          }
-        />
-      </Routes>
-    </Router>
+    <TavusProvider>      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-phone" element={<VerifyPhone />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/mock_interview" element={<MockInterviewPage />} />
+          <Route
+            path="/"
+            element={
+              <div className="min-h-screen bg-white dark:bg-gray-900">
+                <Header />
+                <main>
+                  <Hero />
+                  <Services />
+                  <Testimonials />
+                  <Team />
+                  <Contact />
+                </main>
+                <Footer />
+              </div>
+            }
+          />
+        </Routes>
+      </Router>
+    </TavusProvider>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, LogOut, User, Settings, ChevronDown, Menu } from 'lucide-react';
+import { Plus, Search, LogOut, User, Settings, ChevronDown, Menu, Video } from 'lucide-react';
 import { AuthService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,6 +63,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <Search size={20} />
               AI Job Agent
             </button>
+              <button
+              onClick={() => navigate('/mock_interview')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+            >
+              <Video size={20} />
+              Interview Coach
+            </button>
             
             <button
               onClick={onAddApplication}
@@ -105,6 +112,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     >
                       <Settings size={16} className="mr-2" />
                       Job Preferences
+                    </button>                    <button
+                      onClick={() => {
+                        navigate('/mock_interview');
+                        setIsProfileDropdownOpen(false);
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <Video size={16} className="mr-2" />
+                      Interview Coach
                     </button>
                     <hr className="my-1 border-gray-200 dark:border-gray-600" />
                     <button
