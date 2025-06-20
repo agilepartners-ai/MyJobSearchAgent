@@ -1,50 +1,57 @@
-import { useAtom } from "jotai";
-import { screenAtom } from "./store/screens";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
-import {
-  IntroLoading,
-  Outage,
-  OutOfMinutes,
-  Intro,
-  Instructions,
-  Conversation,
-  FinalScreen,
-  Settings,
-} from "./screens";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import Services from './components/Services';
+import Testimonials from './components/Testimonials';
+import Team from './components/Team';
+import CaseStudies from './components/CaseStudies';
+import Contact from './components/Contact';
+import Footer from './components/Footer';
+import LoginForm from './components/auth/LoginForm';
+import RegisterForm from './components/auth/RegisterForm';
+import ForgotPassword from './components/auth/ForgotPassword';
+import VerifyPhone from './components/auth/VerifyPhone';
+import Dashboard from './components/dashboard/DashboardMain';
+import MockInterview  from './components/MockInterview';
+import { useAuth } from './hooks/useAuth';
 
 function App() {
-  const [{ currentScreen }] = useAtom(screenAtom);
-
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case "introLoading":
-        return <IntroLoading />;
-      case "outage":
-        return <Outage />;
-      case "outOfMinutes":
-        return <OutOfMinutes />;
-      case "intro":
-        return <Intro />;
-      case "settings":
-        return <Settings />;
-      case "instructions":
-        return <Instructions />;
-      case "conversation":
-        return <Conversation />;
-      case "finalScreen":
-        return <FinalScreen />;
-      default:
-        return <IntroLoading />;
-    }
-  };
+  useEffect(() => {
+    document.title = 'MyJobSearchAgent | AI-Powered Career Success Platform';
+    
+    // Remove forced dark mode - let system preference handle it
+    // The CSS will automatically handle light/dark mode switching
+  }, []);
 
   return (
-    <main className="flex h-svh flex-col items-center justify-between gap-3 p-5 sm:gap-4 lg:p-8 bg-black">
-      {currentScreen !== "introLoading" && <Header />}
-      {renderScreen()}
-      {currentScreen !== "introLoading" && <Footer />}
-    </main>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-phone" element={<VerifyPhone />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/mockInterview" element={<MockInterview />} />
+        <Route
+          path="/"
+          element={
+            <div className="min-h-screen bg-white dark:bg-gray-900 theme-transition">
+              <Header />
+              <main>
+                <Hero />
+                <Services />
+                <CaseStudies />
+                <Testimonials />
+                <Team />
+                <Contact />
+              </main>
+              <Footer />
+            </div>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
