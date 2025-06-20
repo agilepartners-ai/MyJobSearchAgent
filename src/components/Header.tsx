@@ -1,124 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { memo } from "react";
+import { Button } from "./ui/button";
+import { Settings, Check } from "lucide-react";
+import { useAtom } from "jotai";
+import { screenAtom } from "@/store/screens";
+import { conversationAtom } from "@/store/conversation";
+import { settingsSavedAtom } from "@/store/settings";
 
-const Header: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+export const Header = memo(() => {
+  const [, setScreenState] = useAtom(screenAtom);
+  const [conversation] = useAtom(conversationAtom);
+  const [settingsSaved] = useAtom(settingsSavedAtom);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const offset = window.scrollY;
-      if (offset > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  const handleSettings = () => {
+    if (!conversation) {
+      setScreenState({ currentScreen: "settings" });
+    }
+  };
 
   return (
-    <header 
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-gray-900/95 backdrop-blur-sm shadow-lg py-4' 
-          : 'bg-transparent py-6'
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Left side - Main Logo and Powered By Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 lg:space-x-5">
-            <Link to="/" className="flex items-center space-x-2">
-              <img src="/image.png" alt="MyJobSearchAgent" className="h-12 sm:h-14 md:h-15 lg:h-16" />
-            </Link>
-            
-            {/* Powered By Logo - Moved closer with responsive spacing */}
-            <a 
-              href="https://bolt.new/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 items-center justify-center"
-            >
-              <img 
-                src="/logotext_poweredby_360w.png" 
-                alt="Powered By" 
-                className="h-6 sm:h-7 md:h-10 lg:h-11 w-auto opacity-90 hover:opacity-100 transition-all duration-300"
-              />
-            </a>
+    <header className="flex w-full items-start justify-between" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <img
+        src="/images/logo.svg"
+        alt="Tavus"
+        className="relative h-6 sm:h-10"
+      />
+      <div className="relative">
+        {settingsSaved && (
+          <div className="absolute -top-2 -right-2 z-20 rounded-full bg-green-500 p-1 animate-fade-in">
+            <Check className="size-3" />
           </div>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {['Services', 'About', 'Case Studies', 'Contact'].map((item) => (
-              <a 
-                key={item} 
-                href={`#${item.toLowerCase().replace(' ', '-')}`}
-                className={`font-medium transition-colors ${
-                  scrolled 
-                    ? 'text-white/90 hover:text-white' 
-                    : 'text-white/90 hover:text-white'
-                }`}
-              >
-                {item}
-              </a>
-            ))}
-            <Link 
-              to="/login" 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg transition-all hover:-translate-y-0.5"
-            >
-              Sign In
-            </Link>
-          </nav>
-
-          {/* Mobile Navigation Toggle */}
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg focus:outline-none"
-            aria-label="Toggle Menu"
-          >
-            {isOpen ? (
-              <X className={`transition-colors ${scrolled ? 'text-white' : 'text-white'}`} size={24} />
-            ) : (
-              <Menu className={`transition-colors ${scrolled ? 'text-white' : 'text-white'}`} size={24} />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div 
-        className={`md:hidden transition-all duration-300 ease-in-out ${
-          isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 invisible'
-        } bg-gray-900/95 backdrop-blur-sm border-t border-gray-700 overflow-hidden`}
-      >
-        <div className="container mx-auto px-4 py-4 space-y-4">
-          {['Services', 'About', 'Case Studies', 'Contact'].map((item) => (
-            <a 
-              key={item} 
-              href={`#${item.toLowerCase().replace(' ', '-')}`}
-              className="block py-2 text-white/90 hover:text-white font-medium transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              {item}
-            </a>
-          ))}
-          <Link 
-            to="/login" 
-            className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium text-center transition-all"
-            onClick={() => setIsOpen(false)}
-          >
-            Sign In
-          </Link>
-        </div>
+        )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleSettings}
+          className="relative size-10 sm:size-14 border-0 bg-transparent hover:bg-zinc-800"
+        >
+          <Settings className="size-4 sm:size-6" />
+        </Button>
       </div>
     </header>
   );
-};
-
-export default Header;
+});

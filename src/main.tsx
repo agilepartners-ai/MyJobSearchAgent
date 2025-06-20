@@ -1,25 +1,15 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import { DailyProvider } from "@daily-co/daily-react";
 
-// Suppress console warnings in development
-import './utils/suppressWarnings';
+import "./fonts/Christmas and Santona.ttf";
+import "./index.css";
 
-// Validate environment configuration
-import { EnvironmentValidator } from './utils/environmentValidator';
-import './utils/apiTester'; // Make APITester available in browser console
-
-// Validate and log environment status
-try {
-  EnvironmentValidator.validateEnvironment();
-  EnvironmentValidator.logEnvironmentStatus();
-} catch (error) {
-  console.error('❌ Application startup failed due to environment configuration:', error);
-}
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <DailyProvider>
+      <App />
+    </DailyProvider>
+  </React.StrictMode>,
 );
