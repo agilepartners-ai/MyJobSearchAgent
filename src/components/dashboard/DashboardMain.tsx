@@ -129,6 +129,12 @@ const Dashboard: React.FC = () => {
     setShowProfileModal(true);
   };
 
+<<<<<<< darcy-tavus
+  const handleJobSearch = () => {
+    setShowJobSearchModal(true);  };
+
+=======
+>>>>>>> main
   const handleJobSearchFormChange = (form: any) => {
     setSearchForm(form);
   };
@@ -411,8 +417,7 @@ const Dashboard: React.FC = () => {
           searchError={searchError}
           onClose={() => setShowJobSearchModal(false)}
           onFormChange={handleJobSearchFormChange}
-          onSearch={handleJobSearchSubmit}
-          onSaveJob={handleSaveJobFromSearch}
+          onSearch={handleJobSearchSubmit}          onSaveJob={handleSaveJobFromSearch}
           onSaveMultipleJobs={handleSaveMultipleJobsFromSearch}
           onClear={handleClearJobSearch}
         />

@@ -17,8 +17,14 @@ import PublicRoute from './components/auth/PublicRoute';
 import JobSearchPage from './components/pages/JobSearchPage';
 import JobListingsPage from './components/pages/JobListingsPage';
 import Dashboard from './components/dashboard/DashboardMain';
+<<<<<<< darcy-tavus
+import MockInterviewPage from './components/dashboard/MockInterviewPage';
+import { useAuth } from './hooks/useAuth';
+import { TavusProvider } from './contexts/TavusContext';
+=======
 import AIInterviewPage from './components/pages/AIInterviewPage';
 import ErrorBoundary from './components/dashboard/ErrorBoundary';
+>>>>>>> main
 
 function App() {
   useEffect(() => {
@@ -27,8 +33,21 @@ function App() {
     // Remove forced dark mode - let system preference handle it
     // The CSS will automatically handle light/dark mode switching
   }, []);
-
   return (
+<<<<<<< darcy-tavus
+    <TavusProvider>      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-phone" element={<VerifyPhone />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/mock_interview" element={<MockInterviewPage />} />
+          <Route
+            path="/"
+            element={
+              <div className="min-h-screen bg-white dark:bg-gray-900">
+=======
     <ErrorBoundary>
       <Router>
         <Routes>
@@ -76,11 +95,15 @@ function App() {
             path="/"
             element={
               <div className="min-h-screen bg-white dark:bg-gray-900 theme-transition">
+>>>>>>> main
                 <Header />
                 <main>
                   <Hero />
                   <Services />
+<<<<<<< darcy-tavus
+=======
                   <Workflow />
+>>>>>>> main
                   <Testimonials />
                   <Team />
                   <Contact />
@@ -91,7 +114,11 @@ function App() {
           />
         </Routes>
       </Router>
+<<<<<<< darcy-tavus
+    </TavusProvider>
+=======
     </ErrorBoundary>
+>>>>>>> main
   );
 }
 
