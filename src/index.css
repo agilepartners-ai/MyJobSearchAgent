@@ -19,23 +19,41 @@
 @layer base {
   html {
     @apply scroll-smooth;
-    color-scheme: light dark;
   }
   
   body {
-    @apply font-sans antialiased text-gray-900 dark:text-white bg-white dark:bg-gray-900;
+    @apply font-sans antialiased transition-colors duration-300;
   }
 
-  /* Force dark mode styles */
-  .dark {
-    color-scheme: dark;
+  /* Light mode (default) */
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+    }
+    
+    body {
+      @apply text-gray-900 bg-white;
+    }
   }
 
-  /* Ensure proper dark mode rendering */
+  /* Dark mode */
   @media (prefers-color-scheme: dark) {
     :root {
       color-scheme: dark;
     }
+    
+    body {
+      @apply text-white bg-gray-900;
+    }
+  }
+
+  /* Manual dark mode override */
+  .dark {
+    color-scheme: dark;
+  }
+  
+  .dark body {
+    @apply text-white bg-gray-900;
   }
 }
 
@@ -58,6 +76,29 @@
   
   .animation-delay-200 {
     animation-delay: 0.2s;
+  }
+
+  /* Smooth transitions for theme switching */
+  .theme-transition {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+
+  /* 3D Visualization Specific Styles */
+  .three-canvas {
+    @apply absolute inset-0 w-full h-full;
+  }
+  
+  .visualization-container {
+    @apply relative overflow-hidden rounded-lg;
+  }
+  
+  /* Enhanced animations for 3D integration */
+  .animate-float-slow {
+    animation: float 8s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
   }
 }
 
@@ -90,7 +131,84 @@
   }
 }
 
-/* Force dark mode for specific components */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Performance optimizations for 3D */
+.three-container {
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .three-container {
+    display: none;
+  }
+}
+
+/* Enhanced dark mode support for better contrast */
+@media (prefers-color-scheme: dark) {
+  .bg-gray-50 {
+    @apply bg-gray-900;
+  }
+
+  .bg-white {
+    @apply bg-gray-800;
+  }
+
+  .text-gray-900 {
+    @apply text-white;
+  }
+
+  .text-gray-800 {
+    @apply text-gray-100;
+  }
+
+  .text-gray-700 {
+    @apply text-gray-200;
+  }
+
+  .text-gray-600 {
+    @apply text-gray-300;
+  }
+
+  .text-gray-500 {
+    @apply text-gray-400;
+  }
+
+  .border-gray-200 {
+    @apply border-gray-700;
+  }
+
+  .border-gray-300 {
+    @apply border-gray-600;
+  }
+
+  .border-gray-100 {
+    @apply border-gray-800;
+  }
+
+  /* Form elements in dark mode */
+  input, textarea, select {
+    @apply bg-gray-700 border-gray-600 text-white;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    @apply ring-blue-400 border-blue-400;
+  }
+}
+
+/* Manual dark mode overrides */
 .dark .bg-gray-50 {
   @apply bg-gray-900;
 }
@@ -101,6 +219,14 @@
 
 .dark .text-gray-900 {
   @apply text-white;
+}
+
+.dark .text-gray-800 {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
 }
 
 .dark .text-gray-600 {
@@ -117,4 +243,16 @@
 
 .dark .border-gray-300 {
   @apply border-gray-600;
+}
+
+.dark .border-gray-100 {
+  @apply border-gray-800;
+}
+
+.dark input, .dark textarea, .dark select {
+  @apply bg-gray-700 border-gray-600 text-white;
+}
+
+.dark input:focus, .dark textarea:focus, .dark select:focus {
+  @apply ring-blue-400 border-blue-400;
 }

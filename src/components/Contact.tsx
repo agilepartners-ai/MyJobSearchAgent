@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Phone, Mail, MapPin, MessageSquare } from 'lucide-react';
 
 const Contact: React.FC = () => {
   return (
@@ -7,109 +7,51 @@ const Contact: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <span className="text-blue-600 dark:text-blue-400 font-medium">Contact Us</span>
-            <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-6 text-gray-900 dark:text-white">
-              Get in Touch
+            <span className="text-blue-600 dark:text-blue-400 font-medium text-lg">Contact Us</span>
+            <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 text-gray-900 dark:text-white">
+              Ready to Accelerate Your Career?
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-lg mb-8 leading-relaxed">
-              Ready to transform your business with AI? Contact us today to discuss how our solutions can address your specific challenges and drive growth.
+            <p className="text-gray-600 dark:text-gray-300 text-xl mb-8 leading-relaxed">
+              Take the first step towards landing your dream job. Our career experts are here to help you succeed with personalized guidance and cutting-edge AI tools.
             </p>
             
             <div className="space-y-6">
               <div className="flex items-start">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
-                  <Phone size={20} />
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
+                  <Phone size={24} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
-                  <p className="text-gray-600 dark:text-gray-300">+1 (555) 123-4567</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Phone Support</h3>
+                  <p className="text-gray-600 dark:text-gray-300">+1 (610) 704-2184</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Mon-Fri, 9AM-6PM EST</p>
                 </div>
               </div>
               
               <div className="flex items-start">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
-                  <Mail size={20} />
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
+                  <Mail size={24} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
-                  <p className="text-gray-600 dark:text-gray-300">info@agilepartners-ai.com</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Email Support</h3>
+                  <p className="text-gray-600 dark:text-gray-300">support@myjobsearchagent.com</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">24/7 response within 2 hours</p>
                 </div>
               </div>
               
               <div className="flex items-start">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
-                  <MapPin size={20} />
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
+                  <MapPin size={24} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Office</h3>
                   <p className="text-gray-600 dark:text-gray-300">
-                    123 Innovation Way<br />
-                    San Francisco, CA 94103
+                    1125 PARK PL APT 206<br />
+                    San Mateo, CA 94403-1578,
+                    Uinted States
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm">
-            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Send us a Message</h3>
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Full Name
-                  </label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email Address
-                  </label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
-                    placeholder="john@example.com"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Company
-                </label>
-                <input 
-                  type="text" 
-                  id="company" 
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
-                  placeholder="Your Company"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Message
-                </label>
-                <textarea 
-                  id="message" 
-                  rows={4} 
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
-                  placeholder="How can we help you?"
-                ></textarea>
-              </div>
-              
-              <button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-all hover:shadow-lg"
-              >
-                Send Message
-              </button>
-            </form>
           </div>
         </div>
       </div>
