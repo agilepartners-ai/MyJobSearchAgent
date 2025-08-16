@@ -5,6 +5,7 @@ dist
 !.env.example
 .DS_Store
 
+
 # Debug files
 *debug*.js
 *debug*.ts
@@ -32,3 +33,7 @@ test-*
 # Team updates folder
 latest updates from team/
 *~
+
+# Others
+.next
+package-lock.json

@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { X, Download, FileText, CheckCircle, AlertCircle, Target, TrendingUp, Award, Brain, Settings, Upload, HardDrive } from 'lucide-react';
+import { X, Download, FileText, CheckCircle, AlertCircle, Target, TrendingUp, Award, Brain, Settings, Upload, HardDrive, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import OptimizationResults from './OptimizationResults';
 import { ResumeExtractionService } from '../../services/resumeExtractionService';
 import { AIEnhancementService } from '../../services/aiEnhancementService';
-import { UserProfileData } from '../../services/profileService';
+import { UserProfileData, ProfileService } from '../../services/profileService';
 import { useAuth } from '../../hooks/useAuth';
+import { extractTextFromPDF, validatePDFFile, PDFExtractionResult, extractTextFallback } from '../../utils/pdfUtils';
 
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -40,7 +41,7 @@ const generateUUID = (): string => {
 
 const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
   jobDescription,
-  applicationData,
+  applicationData = { position: '', company_name: '' },
   detailedUserProfile,
   onSave,
   onClose
@@ -59,29 +60,66 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
   const [loading, setLoading] = React.useState(false);
   const [extractionProgress, setExtractionProgress] = React.useState<string>('');
   const [documentId] = React.useState<string>(generateUUID());
+  const [extractedPDFData, setExtractedPDFData] = React.useState<PDFExtractionResult | null>(null);
+  const [isExtracting, setIsExtracting] = React.useState(false);
+  const [showExtractedText, setShowExtractedText] = React.useState(false);
+  const [showJobDescription, setShowJobDescription] = React.useState(true);
+  const [copiedJobDesc, setCopiedJobDesc] = React.useState(false);
+  const [copiedExtracted, setCopiedExtracted] = React.useState(false);
+  const [manualText, setManualText] = React.useState<string>('');
+  const [showManualInput, setShowManualInput] = React.useState(false);
+  // NEW: additional instructions for AI
+  const [additionalPrompt, setAdditionalPrompt] = React.useState<string>('');
+
   const { user } = useAuth();
-  const config = ResumeExtractionService.getConfiguration();
+  const config = AIEnhancementService.getConfiguration();
+
+  // NEW: resolve user profile (prop -> fetched)
+  const [resolvedProfile, setResolvedProfile] = React.useState<UserProfileData | null>(detailedUserProfile ?? null);
+
+  useEffect(() => {
+    if (detailedUserProfile) setResolvedProfile(detailedUserProfile);
+  }, [detailedUserProfile]);
+
+  useEffect(() => {
+    // fetch only if not provided by props
+    if (!resolvedProfile && user?.id) {
+      ProfileService.getUserProfile(user.id)
+        .then((p) => p && setResolvedProfile(p))
+        .catch(() => {/* ignore */ });
+    }
+  }, [resolvedProfile, user?.id]);
 
   // Keep jobDescription in sync with Redux (for persistence)
   useEffect(() => {
     if (jobDescription && jobDescription !== persistedJobDescription) {
       dispatch({ type: 'aiEnhancementModal/openModal', payload: { jobDescription } });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobDescription]);
+  }, [jobDescription, dispatch, persistedJobDescription]);
 
-  // File select handler: reads file as base64 and stores meta/content in Redux
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // File select handler: reads file as base64 and stores meta/content in Redux, plus extracts text
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const validation = ResumeExtractionService.validateResumeFile(file);
-      if (!validation.isValid) {
-        dispatch(setError(validation.error || 'Invalid file'));
-        return;
-      }
+    if (!file) return;
+
+    // Validate the file
+    const validation = validatePDFFile(file);
+    if (!validation.isValid) {
+      dispatch(setError(validation.error || 'Please select a valid PDF or text file.'));
+      return;
+    }
+
+    setIsExtracting(true);
+    setShowManualInput(false);
+    setManualText('');
+    setExtractedPDFData(null);
+
+    try {
+      console.log('Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
+
+      // Read file as base64 for Redux storage
       const reader = new FileReader();
       reader.onload = () => {
-        // Always use base64 string after comma (DataURL format)
         const base64 = reader.result as string;
         dispatch(setSelectedFile({
           meta: {
@@ -95,10 +133,80 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
         dispatch(setError(''));
         dispatch(setCloudFileUrl(''));
       };
-      reader.onerror = () => {
-        dispatch(setError('Failed to read file. Please try again.'));
-      };
       reader.readAsDataURL(file);
+
+      // Extract text for debugging
+      const extractionResult = await extractTextFromPDF(file);
+
+      if (extractionResult.error) {
+        if (extractionResult.error === 'MANUAL_INPUT_REQUIRED') {
+          setShowManualInput(true);
+          setExtractedPDFData(null);
+          dispatch(setError('Automatic text extraction failed. Please paste your resume text manually below.'));
+        } else {
+          // Try fallback method
+          const fallbackResult = await extractTextFallback(file);
+
+          if (fallbackResult.error && !fallbackResult.text) {
+            setShowManualInput(true);
+            setExtractedPDFData(null);
+            dispatch(setError('Unable to extract text automatically. Please paste your resume text in the manual input field below.'));
+          } else {
+            setExtractedPDFData(fallbackResult);
+            setShowExtractedText(true);
+            if (fallbackResult.text.length > 0) {
+              console.log(`Text extracted successfully: ${fallbackResult.text.length} characters using fallback method.`);
+            } else {
+              dispatch(setError(fallbackResult.error || 'No text could be extracted from the file.'));
+            }
+          }
+        }
+      } else {
+        setExtractedPDFData(extractionResult);
+        setShowExtractedText(true);
+        console.log(`File processed successfully: extracted ${extractionResult.text.length} characters from ${extractionResult.pages} pages.`);
+      }
+    } catch (error) {
+      console.error('Error processing file:', error);
+      setShowManualInput(true);
+      setExtractedPDFData(null);
+      dispatch(setError('Unable to process the file automatically. Please use the manual text input below.'));
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleManualTextSubmit = () => {
+    if (!manualText.trim()) {
+      dispatch(setError('Please paste your resume text before proceeding.'));
+      return;
+    }
+
+    const manualResult: PDFExtractionResult = {
+      text: manualText.trim(),
+      pages: 1,
+      metadata: { source: 'manual_input' }
+    };
+
+    setExtractedPDFData(manualResult);
+    setShowExtractedText(true);
+    setShowManualInput(false);
+    dispatch(setError(''));
+    console.log(`Resume text added: successfully added ${manualText.length} characters of resume text.`);
+  };
+
+  const copyToClipboard = async (text: string, type: 'job' | 'extracted') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'job') {
+        setCopiedJobDesc(true);
+        setTimeout(() => setCopiedJobDesc(false), 2000);
+      } else {
+        setCopiedExtracted(true);
+        setTimeout(() => setCopiedExtracted(false), 2000);
+      }
+    } catch (error) {
+      console.error('Failed to copy text to clipboard:', error);
     }
   };
 
@@ -125,24 +233,31 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
   };
 
   const handleGenerateAI = async () => {
-    if (!selectedFileMeta && !cloudFileUrl) {
-      dispatch(setError('Please select a resume file or provide a cloud file URL'));
+    if (!selectedFileMeta && !cloudFileUrl && !extractedPDFData?.text) {
+      dispatch(setError('Please select a resume file or provide resume text'));
       return;
     }
 
-    if (!jobDescription.trim()) {
+    // use either immediate prop or persisted value
+    const baseJD = (jobDescription || persistedJobDescription || '').trim();
+    if (!baseJD) {
       dispatch(setError('Job description is required for AI enhancement'));
       return;
     }
 
+    // append additional instructions (minimal change)
+    const combinedJobDescription = additionalPrompt.trim()
+      ? `${baseJD}\n\nAdditional instructions: ${additionalPrompt.trim()}`
+      : baseJD;
+
     // Check API configuration
     if (!config.hasApiKey) {
-      dispatch(setError('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.'));
+      dispatch(setError('OpenAI API key is not configured. Please set NEXT_PUBLIC_OPENAI_API_KEY in your environment variables.'));
       return;
     }
 
-    // Validate enhancement request
-    const validation = AIEnhancementService.validateEnhancementRequest(jobDescription);
+    // Validate enhancement request (use combined prompt)
+    const validation = AIEnhancementService.validateEnhancementRequest(combinedJobDescription);
     if (!validation.isValid) {
       dispatch(setError(validation.error || 'Invalid request'));
       return;
@@ -153,218 +268,176 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
     setExtractionProgress('');
 
     try {
-      let fileToProcess: File | null = null;
-      if (selectedFileMeta && selectedFileContent) {
-        // Convert base64 to File (with null check)
+      // Ensure we have resume text to work with
+      let resumeText = '';
+
+      if (extractedPDFData && extractedPDFData.text) {
+        // Use previously extracted text
+        resumeText = extractedPDFData.text;
+        console.log('Using previously extracted text:', resumeText.length, 'characters');
+      } else if (selectedFileMeta && selectedFileContent) {
+        // Try to extract from file
+        setExtractionProgress('Extracting text from uploaded file...');
         const arr = selectedFileContent.split(',');
         const mimeMatch = arr[0].match(/:(.*?);/);
         const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
         const bstr = arr[1] ? atob(arr[1]) : '';
         let n = bstr.length, u8arr = new Uint8Array(n);
         while (n--) u8arr[n] = bstr.charCodeAt(n);
-        fileToProcess = new File([u8arr], selectedFileMeta.name, { type: mime });
-      }
-      // If using cloud URL, download the file first
-      if (cloudFileUrl && !fileToProcess) {
-        setExtractionProgress('Downloading file from cloud storage...');
-        fileToProcess = await downloadFileFromUrl(cloudFileUrl);
-      }
+        const fileToProcess = new File([u8arr], selectedFileMeta.name, { type: mime });
 
-      if (!fileToProcess) {
-        throw new Error('No file to process');
-      }
-
-      // Step 1: Extract resume data using AI
-      setExtractionProgress('Extracting resume data using AI...');
-      const extractionResult = await ResumeExtractionService.extractResumeJson(fileToProcess, {
-        modelType: config.defaultModelType,
-        model: config.defaultModel,
-        fileId: documentId // Use the persistent UUID
-      });
-
-      if (!extractionResult.success) {
-        // Handle specific API errors
-        if (extractionResult.error?.includes('PDF format not supported') ||
-          extractionResult.error?.includes('format not supported') ||
-          extractionResult.error?.includes('unsupported file type')) {
-          throw new Error('PDF format not supported by the current API. Please try uploading a Word document (.docx) or text file (.txt) instead.');
+        const extractionResult = await extractTextFromPDF(fileToProcess);
+        if (extractionResult.text) {
+          resumeText = extractionResult.text;
+          setExtractedPDFData(extractionResult);
+        } else {
+          throw new Error('Unable to extract text from the uploaded file');
         }
+      } else {
+        throw new Error('No resume text available for analysis');
+      }
 
-        if (extractionResult.error?.includes('API key') ||
-          extractionResult.error?.includes('authentication')) {
-          throw new Error('API authentication failed. Please check your OpenAI API key configuration.');
+      if (!resumeText || resumeText.trim().length < 50) {
+        throw new Error('Resume text is too short or empty. Please provide a more detailed resume.');
+      }
+
+      // Step 2: Enhance resume using OpenAI
+      setExtractionProgress('Analyzing resume with OpenAI...');
+
+      const enhancementResult = await AIEnhancementService.enhanceWithOpenAI(
+        resumeText,
+        combinedJobDescription, // use combined prompt
+        {
+          modelType: config.defaultModelType,
+          model: config.defaultModel,
+          fileId: documentId
         }
-
-        if (extractionResult.error?.includes('rate limit') ||
-          extractionResult.error?.includes('quota')) {
-          throw new Error('API rate limit exceeded. Please try again in a few minutes.');
-        }
-
-        throw new Error(extractionResult.error || 'Failed to extract resume data. The API may be temporarily unavailable.');
-      }
-
-      setExtractionProgress('Processing extracted data...');
-
-      // Parse the extracted resume data
-      const parsedResumeData = ResumeExtractionService.parseResumeData(extractionResult.resume_json);
-
-      if (!parsedResumeData) {
-        throw new Error('Failed to parse extracted resume data. The resume format may not be compatible.');
-      }
-
-      // Step 2: Enhance resume using AI analysis
-      setExtractionProgress('Analyzing resume against job description...');
-
-      let enhancementResult;
-      try {
-        // Try using the JSON mode first (more reliable)
-        enhancementResult = await AIEnhancementService.enhanceWithJson(
-          extractionResult.resume_json,
-          jobDescription,
-          {
-            modelType: config.defaultModelType,
-            model: config.defaultModel,
-            fileId: documentId
-          }
-        );
-      } catch (jsonError) {
-        // Fallback to file mode
-        setExtractionProgress('Retrying analysis with file upload...');
-        enhancementResult = await AIEnhancementService.enhanceWithFile(
-          fileToProcess,
-          jobDescription,
-          {
-            modelType: config.defaultModelType,
-            model: config.defaultModel,
-            fileId: documentId
-          }
-        );
-      }
+      );
 
       if (!enhancementResult.success) {
         throw new Error(enhancementResult.error || 'Failed to analyze resume. Please try again.');
       }
 
-      // Normalize the response to ensure all fields exist
-      const normalizedResult = AIEnhancementService.normalizeEnhancementResponse(enhancementResult);
-
       setExtractionProgress('Generating optimization recommendations...');
 
-      // Generate mock URLs for the enhanced documents (will be replaced by real PDF generation)
+      // Generate mock URLs for the enhanced documents
       const timestamp = Date.now();
       const enhancedResumeUrl = `https://example.com/ai-enhanced-resume-${documentId}.pdf`;
       const enhancedCoverLetterUrl = `https://example.com/ai-enhanced-cover-letter-${documentId}.pdf`;
 
-      // Combine real AI analysis with our UI structure
+      // Structure results using the detailed AI analysis
       const optimizationResults = {
-        matchScore: normalizedResult.analysis.match_score,
-        summary: normalizedResult.analysis.match_score >= 80
-          ? `Excellent match! Your resume shows strong alignment with this position (${normalizedResult.analysis.match_score}% match). The AI has identified key strengths and provided targeted recommendations for optimization.`
-          : normalizedResult.analysis.match_score >= 70
-            ? `Good match! Your resume aligns well with this position (${normalizedResult.analysis.match_score}% match). The AI has identified areas for improvement to strengthen your application.`
-            : `Moderate match (${normalizedResult.analysis.match_score}% match). The AI has identified significant opportunities to better align your resume with this position.`,
+        matchScore: enhancementResult.analysis.match_score,
+        summary: enhancementResult.analysis.match_score >= 80
+          ? `Excellent match! Your resume shows strong alignment with this position (${enhancementResult.analysis.match_score}% match). The AI has identified key strengths and provided targeted recommendations for optimization.`
+          : enhancementResult.analysis.match_score >= 70
+            ? `Good match! Your resume aligns well with this position (${enhancementResult.analysis.match_score}% match). The AI has identified areas for improvement to strengthen your application.`
+            : `Moderate match (${enhancementResult.analysis.match_score}% match). The AI has identified significant opportunities to better align your resume with this position.`,
 
         // Use real AI analysis data
-        strengths: normalizedResult.analysis.strengths.length > 0
-          ? normalizedResult.analysis.strengths
-          : [
-            `Strong technical background with ${parsedResumeData.experience?.length || 0} work experience entries`,
-            `Comprehensive skill set including relevant technologies`,
-            `Educational background aligns with job requirements`
-          ],
-
-        gaps: normalizedResult.analysis.gaps.length > 0
-          ? normalizedResult.analysis.gaps
-          : [
-            "Some industry-specific keywords could be emphasized more prominently",
-            "Consider adding more quantified achievements with specific metrics"
-          ],
-
-        suggestions: normalizedResult.analysis.suggestions.length > 0
-          ? normalizedResult.analysis.suggestions
-          : [
-            "Incorporate more action verbs and industry-specific terminology",
-            "Add specific metrics and percentages to quantify your achievements",
-            "Consider reorganizing sections to highlight most relevant experience first"
-          ],
+        strengths: enhancementResult.analysis.strengths,
+        gaps: enhancementResult.analysis.gaps,
+        suggestions: enhancementResult.analysis.suggestions,
 
         optimizedResumeUrl: enhancedResumeUrl,
         optimizedCoverLetterUrl: enhancedCoverLetterUrl,
 
         // Use real keyword analysis
         keywordAnalysis: {
-          coverageScore: normalizedResult.analysis.keyword_analysis.keyword_density_score,
-          coveredKeywords: normalizedResult.analysis.keyword_analysis.present_keywords,
-          missingKeywords: normalizedResult.analysis.keyword_analysis.missing_keywords
+          coverageScore: enhancementResult.analysis.keyword_analysis.keyword_density_score,
+          coveredKeywords: enhancementResult.analysis.keyword_analysis.present_keywords,
+          missingKeywords: enhancementResult.analysis.keyword_analysis.missing_keywords
         },
 
-        // Enhanced experience optimization using real data
-        experienceOptimization: parsedResumeData.experience?.map((exp: any, index: number) => ({
-          company: exp.company || 'Unknown Company',
-          position: exp.position || 'Unknown Position',
-          relevanceScore: Math.max(70, normalizedResult.analysis.match_score - (index * 5)),
-          included: index < 3, // Include top 3 most relevant
-          reasoning: index >= 3 ? "Less relevant to target position based on AI analysis" : undefined
-        })) || [],
+        // Mock experience optimization (can be enhanced with more AI analysis)
+        experienceOptimization: [],
 
-        // Enhanced skills optimization
+        // Enhanced skills optimization using AI data
         skillsOptimization: {
-          technicalSkills: normalizedResult.enhancements.enhanced_skills.length > 0
-            ? normalizedResult.enhancements.enhanced_skills
-            : Array.isArray(parsedResumeData.skills) ? parsedResumeData.skills.slice(0, 8) : [],
-          softSkills: ["Leadership", "Problem Solving", "Communication", "Team Collaboration"],
-          missingSkills: normalizedResult.analysis.keyword_analysis.missing_keywords.slice(0, 5)
+          technicalSkills: enhancementResult.enhancements.detailed_resume_sections?.technical_skills || enhancementResult.enhancements.enhanced_skills.slice(0, 8),
+          softSkills: enhancementResult.enhancements.detailed_resume_sections?.soft_skills || ["Leadership", "Problem Solving", "Communication", "Team Collaboration"],
+          missingSkills: enhancementResult.analysis.keyword_analysis.missing_keywords.slice(0, 5)
         },
 
-        // Include parsed resume data
-        parsedResume: parsedResumeData,
+        // Include parsed resume data BUT WITHOUT placeholders (avoid polluting fallbacks)
+        parsedResume: {
+          personal: {
+            name: resolvedProfile?.fullName || '',
+            email: resolvedProfile?.email || user?.email || '',
+            phone: resolvedProfile?.phone || '',
+            location: resolvedProfile?.location || ''
+          }
+        },
+
+        // Include detailed AI enhancements
+        aiEnhancements: {
+          enhancedSummary: enhancementResult.enhancements.enhanced_summary,
+          enhancedExperienceBullets: enhancementResult.enhancements.enhanced_experience_bullets,
+          coverLetterOutline: enhancementResult.enhancements.cover_letter_outline,
+          sectionRecommendations: enhancementResult.analysis.section_recommendations,
+          // Add detailed sections
+          detailedResumeSections: enhancementResult.enhancements.detailed_resume_sections || {},
+          detailedCoverLetter: enhancementResult.enhancements.detailed_cover_letter || {}
+        },
 
         // Enhanced metadata
         extractionMetadata: {
           documentId: documentId,
-          extractedTextLength: extractionResult.extracted_text_length,
+          extractedTextLength: resumeText.length,
           processingTime: Date.now() - timestamp,
-          modelUsed: normalizedResult.metadata.model_used,
-          apiBaseUrl: config.apiBaseUrl,
-          sectionsAnalyzed: normalizedResult.metadata.resume_sections_analyzed
-        },
-
-        // Include AI enhancements
-        aiEnhancements: {
-          enhancedSummary: normalizedResult.enhancements.enhanced_summary,
-          enhancedExperienceBullets: normalizedResult.enhancements.enhanced_experience_bullets,
-          coverLetterOutline: normalizedResult.enhancements.cover_letter_outline,
-          sectionRecommendations: normalizedResult.analysis.section_recommendations
+          modelUsed: enhancementResult.metadata.model_used,
+          apiBaseUrl: 'OpenAI Direct',
+          sectionsAnalyzed: enhancementResult.metadata.resume_sections_analyzed,
+          // Include PDF debug info if available
+          pdfExtraction: extractedPDFData ? {
+            pages: extractedPDFData.pages,
+            textLength: extractedPDFData.text.length,
+            metadata: extractedPDFData.metadata,
+            extractionMethod: extractedPDFData.metadata?.source || 'pdf_extraction'
+          } : null
         },
 
         // Include raw AI response for debugging
-        rawAIResponse: normalizedResult,
+        rawAIResponse: enhancementResult,
 
         // Add job context for PDF generation
         jobDescription: jobDescription,
         applicationData: applicationData,
 
         // Add detailed user profile and user for cover letter generation
-        detailedUserProfile: detailedUserProfile,
-        user: user
+        detailedUserProfile: resolvedProfile, // ensure profile is available to HTML generators
+        user: user,
+
+        // Include extracted text for debugging
+        extractedText: resumeText
       };
 
+      console.log('✅ Setting optimization results:', optimizationResults);
+      console.log('✅ About to show results screen...');
+
+      // Set results first
       dispatch(setOptimizationResults(optimizationResults));
-      dispatch(setShowResults(true));
+
+      // Then show results screen - add a small delay to ensure state is updated
+      setTimeout(() => {
+        console.log('✅ Showing results screen now...');
+        dispatch(setShowResults(true));
+      }, 100);
 
     } catch (err: any) {
-      // Provide user-friendly error messages with improved HTTP 500 handling
+      console.error('AI enhancement error:', err);
+
+      // Enhanced error handling
       let userMessage = err.message;
 
-      // Handle HTTP 500 errors specifically
-      if (err.message.includes('HTTP error! status: 500') || err.message.includes('status: 500')) {
-        userMessage = 'The AI service is experiencing temporary issues on the server side. This is usually resolved quickly. Please try again in a few moments, or contact support if the problem persists.';
+      if (err.message.includes('API key')) {
+        userMessage = 'OpenAI API key is not configured or invalid. Please check your environment variables.';
+      } else if (err.message.includes('quota') || err.message.includes('429')) {
+        userMessage = 'OpenAI API quota exceeded. Please try again later or check your usage limits.';
       } else if (err.message.includes('Failed to fetch') || err.message.includes('network')) {
         userMessage = 'Unable to connect to the AI service. Please check your internet connection and try again.';
       } else if (err.message.includes('timeout') || err.message.includes('timed out')) {
         userMessage = 'The AI processing is taking longer than expected. Please try again with a smaller file or try again later.';
-      } else if (err.message.includes('API key')) {
-        userMessage = 'API configuration error. Please contact support for assistance.';
       } else if (!err.message || err.message === 'Failed to generate AI-enhanced documents. Please try again.') {
         userMessage = 'The AI service is temporarily unavailable. Please try again in a few minutes or contact support if the issue persists.';
       }
@@ -376,6 +449,37 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
     }
   };
 
+  // Helper method to convert resume JSON to text
+  const convertResumeJsonToText = (resumeJson: any): string => {
+    let text = '';
+
+    if (resumeJson.personal) {
+      text += `PERSONAL INFORMATION:\n`;
+      text += `Name: ${resumeJson.personal.name || ''}\n`;
+      text += `Email: ${resumeJson.personal.email || ''}\n`;
+      text += `Phone: ${resumeJson.personal.phone || ''}\n\n`;
+    }
+
+    if (resumeJson.summary) {
+      text += `PROFESSIONAL SUMMARY:\n${resumeJson.summary}\n\n`;
+    }
+
+    if (resumeJson.experience) {
+      text += `WORK EXPERIENCE:\n`;
+      resumeJson.experience.forEach((exp: any) => {
+        text += `${exp.position || ''} at ${exp.company || ''}\n`;
+        if (exp.description) text += `${exp.description}\n`;
+      });
+      text += '\n';
+    }
+
+    if (resumeJson.skills) {
+      text += `SKILLS: ${Array.isArray(resumeJson.skills) ? resumeJson.skills.join(', ') : resumeJson.skills}\n\n`;
+    }
+
+    return text;
+  };
+
   const handleResultsClose = () => {
     dispatch(setShowResults(false));
     // Save the URLs to the parent component
@@ -385,14 +489,52 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
     onClose();
   };
 
+  // Add debug logging to see what's happening with the results
+  React.useEffect(() => {
+    console.log('🔍 showResults changed:', showResults);
+    console.log('🔍 optimizationResults:', optimizationResults);
+  }, [showResults, optimizationResults]);
+
   if (showResults && optimizationResults) {
+    console.log('🎯 Rendering OptimizationResults component with detailed content');
+    console.log('🎯 Results data:', optimizationResults);
+
+    // Generate detailed resume HTML content
+    const detailedResumeHtml = generateDetailedResumeHTML(optimizationResults);
+
+    // Generate detailed cover letter HTML content
+    const detailedCoverLetterHtml = generateDetailedCoverLetterHTML(optimizationResults);
+
     return (
       <OptimizationResults
-        results={optimizationResults}
-        onClose={handleResultsClose}
+        results={{
+          resume_html: detailedResumeHtml,
+          cover_letter_html: detailedCoverLetterHtml,
+        }}
+        jobDetails={{
+          title: applicationData?.position || 'Position',
+          company: applicationData?.company_name || 'Company',
+          description: jobDescription,
+        }}
+        analysisData={{
+          matchScore: optimizationResults.matchScore || 85,
+          summary: optimizationResults.summary || 'AI analysis summary will appear here.',
+          strengths: optimizationResults.strengths || [],
+          gaps: optimizationResults.gaps || [],
+          suggestions: optimizationResults.suggestions || [],
+          keywordAnalysis: optimizationResults.keywordAnalysis || {
+            coverageScore: 75,
+            coveredKeywords: [],
+            missingKeywords: []
+          }
+        }}
+        onBack={handleResultsClose}
       />
     );
   }
+
+  console.log('🔍 Rendering main modal (not results screen)');
+  console.log('🔍 showResults:', showResults, 'optimizationResults:', !!optimizationResults);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -491,22 +633,45 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
             </div>
           )}
 
-          {/* Job Description - First Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <FileText size={16} className="inline mr-2" />
-              Job Description
-            </label>
-            <textarea
-              value={jobDescription || persistedJobDescription || ''}
-              readOnly
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-              placeholder="Job description will be used to tailor your resume and cover letter..."
-            />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              This job description will be analyzed by AI to optimize your resume and cover letter
-            </p>
+          {/* Job Description Section */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+            <button
+              onClick={() => setShowJobDescription(!showJobDescription)}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <Target className="text-blue-600 dark:text-blue-400" size={20} />
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                  Target Job Description
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(jobDescription || persistedJobDescription || '', 'job');
+                  }}
+                  className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                  title="Copy job description"
+                >
+                  {copiedJobDesc ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+                {showJobDescription ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+            </button>
+
+            {showJobDescription && (
+              <div className="px-4 pb-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-200 dark:border-blue-600 max-h-64 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-sans leading-relaxed">
+                    {jobDescription || persistedJobDescription || ''}
+                  </pre>
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
+                  Character count: {(jobDescription || persistedJobDescription || '').length} | Lines: {(jobDescription || persistedJobDescription || '').split('\n').length}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Resume Upload Section */}
@@ -536,6 +701,12 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Only PDF or Text files (max 10MB)
                   </p>
+                  {isExtracting && (
+                    <div className="mt-4 flex items-center justify-center gap-2 text-purple-600 dark:text-purple-400">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                      <span>Extracting text from file...</span>
+                    </div>
+                  )}
                   {selectedFileMeta && (
                     <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center gap-2">
                       <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
@@ -547,7 +718,121 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* NEW: Additional instructions for AI */}
+            <div className="mt-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Additional instructions for AI (optional)
+              </label>
+              <textarea
+                value={additionalPrompt}
+                onChange={(e) => setAdditionalPrompt(e.target.value)}
+                placeholder="Add any extra guidance to emphasize in your resume or cover letter (e.g., highlight leadership on project X, stress TypeScript expertise, prefer remote roles, etc.)"
+                className="w-full h-24 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-y text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                This text is appended to the AI prompt.
+              </p>
+            </div>
           </div>
+
+          {/* Manual Text Input Section */}
+          {showManualInput && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <FileText className="text-yellow-600 dark:text-yellow-400" size={20} />
+                Manual Resume Text Input
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Since automatic text extraction failed, please paste your resume content below:
+              </p>
+              <textarea
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                placeholder="Paste your resume text here..."
+                className="w-full h-48 p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none text-sm font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+              <div className="flex justify-between items-center mt-3">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Characters: {manualText.length}
+                </span>
+                <button
+                  onClick={handleManualTextSubmit}
+                  disabled={!manualText.trim()}
+                  className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Use This Text
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Extracted Text Debug Section */}
+          {extractedPDFData && (
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowExtractedText(!showExtractedText)}
+                className="w-full flex items-center justify-between p-4 text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="text-gray-600 dark:text-gray-400" size={20} />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Extracted Resume Text (Debug)
+                  </h3>
+                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs font-medium">
+                    {extractedPDFData.pages} pages • {extractedPDFData.text.length} chars
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {extractedPDFData.text && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(extractedPDFData.text, 'extracted');
+                      }}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                      title="Copy extracted text"
+                    >
+                      {copiedExtracted ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  )}
+                  {showExtractedText ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+              </button>
+
+              {showExtractedText && (
+                <div className="px-4 pb-4">
+                  {extractedPDFData.error ? (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                        <AlertCircle size={16} />
+                        <span className="font-medium">Extraction Error</span>
+                      </div>
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                        {extractedPDFData.error}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 max-h-80 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
+                          {extractedPDFData.text || 'No text extracted from PDF'}
+                        </pre>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <span>📄 Pages: {extractedPDFData.pages}</span>
+                        <span>📝 Characters: {extractedPDFData.text.length}</span>
+                        <span>📊 Words: ~{extractedPDFData.text.split(/\s+/).length}</span>
+                        {extractedPDFData.metadata && (
+                          <span>📋 Source: {extractedPDFData.metadata.source || 'pdf_extraction'}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Generate Button */}
           <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -572,11 +857,25 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              className="px-6 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg font-medium hover:bg-red-700 dark:hover:bg-red-800 transition-all"
             >
               Cancel
             </button>
           </div>
+
+          {!extractedPDFData?.text && !showManualInput && selectedFileMeta && (
+            <div className="text-center">
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                ⚠️ If text extraction is taking too long, you can use manual text input instead.
+              </p>
+              <button
+                onClick={() => setShowManualInput(true)}
+                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Switch to manual text input
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -584,3 +883,360 @@ const AIEnhancementModal: React.FC<AIEnhancementModalProps> = ({
 };
 
 export default AIEnhancementModal;
+
+// Helper functions to generate detailed HTML content with better formatting
+const generateDetailedResumeHTML = (results: any): string => {
+  const sections = results.aiEnhancements?.detailedResumeSections || {};
+  // prefer profile -> auth user -> parsed resume -> placeholder
+  const profile = results.detailedUserProfile || {};
+  const authUser = results.user || {};
+  const parsedPersonal = results.parsedResume?.personal || {};
+
+  const name =
+    (profile.fullName && profile.fullName.trim()) ||
+    authUser.displayName ||
+    (parsedPersonal.name && parsedPersonal.name.trim()) ||
+    'Professional Name';
+
+  const email =
+    (profile.email && profile.email.trim()) ||
+    authUser.email ||
+    (parsedPersonal.email && parsedPersonal.email.trim()) ||
+    'email@example.com';
+
+  const phone =
+    (profile.phone && profile.phone.trim()) ||
+    (parsedPersonal.phone && parsedPersonal.phone.trim()) ||
+    '';
+
+  const location =
+    (profile.location && profile.location.trim()) ||
+    (parsedPersonal.location && parsedPersonal.location.trim()) ||
+    '';
+
+  return `
+    <div style="font-family: 'Arial', sans-serif; line-height: 1.4; color: #333; max-width: 800px;">
+      <!-- Header Section -->
+      <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="font-size: 26px; margin-bottom: 8px; color: #1f2937; font-weight: 700;">${name}</h1>
+        <div style="font-size: 13px; color: #6b7280; margin-bottom: 5px;">
+          <span>${email}</span>${phone ? ` • <span>${phone}</span>` : ''}${location ? ` • <span>${location}</span>` : ''}
+        </div>
+      </header>
+
+      <!-- Professional Summary -->
+      <section style="margin-bottom: 20px;">
+        <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">PROFESSIONAL SUMMARY</h2>
+        <p style="text-align: justify; line-height: 1.6; font-size: 13px; margin: 0;">
+          ${sections.professional_summary || results.aiEnhancements?.enhancedSummary || 'AI-enhanced professional summary highlighting relevant experience, key skills, and value proposition tailored to the target position. This comprehensive summary demonstrates alignment with job requirements and showcases unique qualifications that make the candidate an ideal fit for the role.'}
+        </p>
+      </section>
+
+      <!-- Technical Skills -->
+      <section style="margin-bottom: 20px;">
+        <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">TECHNICAL SKILLS</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; margin-bottom: 8px;">
+          ${(sections.technical_skills || results.skillsOptimization?.technicalSkills || []).map((skill: string) =>
+    `<span style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #e5e7eb;">${skill}</span>`
+  ).join('')}
+        </div>
+      </section>
+
+      <!-- Core Competencies -->
+      <section style="margin-bottom: 20px;">
+        <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">CORE COMPETENCIES</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 6px;">
+          ${(sections.soft_skills || results.skillsOptimization?.softSkills || []).map((skill: string) =>
+    `<span style="background: #e0f2fe; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #0277bd; border: 1px solid #b3e5fc;">${skill}</span>`
+  ).join('')}
+        </div>
+      </section>
+
+      <!-- Professional Experience -->
+      <section style="margin-bottom: 20px;">
+        <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">PROFESSIONAL EXPERIENCE</h2>
+        ${(sections.experience || []).map((exp: any) => `
+          <div style="margin-bottom: 18px; page-break-inside: avoid;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
+              <h3 style="font-size: 14px; font-weight: 600; margin: 0; color: #1f2937;">${exp.position || 'Job Title'}</h3>
+              <span style="font-size: 12px; color: #6b7280; font-weight: 500;">${exp.duration || 'Start - End'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 13px; color: #4b5563; font-weight: 500;">${exp.company || 'Company Name'}</span>
+              <span style="font-size: 12px; color: #6b7280;">${exp.location || 'City, State'}</span>
+            </div>
+            
+            ${exp.key_responsibilities?.length ? `
+              <div style="margin-bottom: 8px;">
+                <strong style="font-size: 12px; color: #374151;">Key Responsibilities:</strong>
+                <ul style="margin: 3px 0 0 15px; padding: 0;">
+                  ${exp.key_responsibilities.map((resp: string) => `<li style="margin-bottom: 3px; font-size: 12px; line-height: 1.4;">${resp}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${exp.achievements?.length ? `
+              <div style="margin-bottom: 8px;">
+                <strong style="font-size: 12px; color: #374151;">Key Achievements:</strong>
+                <ul style="margin: 3px 0 0 15px; padding: 0;">
+                  ${exp.achievements.map((achievement: string) => `<li style="margin-bottom: 3px; font-size: 12px; line-height: 1.4; color: #059669;">${achievement}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${exp.technologies_used?.length ? `
+              <div style="margin-top: 5px;">
+                <strong style="font-size: 11px; color: #6b7280;">Technologies:</strong>
+                <span style="font-size: 11px; color: #6b7280;"> ${exp.technologies_used.join(', ')}</span>
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </section>
+
+      <!-- Education -->
+      ${sections.education?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">EDUCATION</h2>
+          ${sections.education.map((edu: any) => `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h3 style="font-size: 13px; font-weight: 600; margin: 0; color: #1f2937;">${edu.degree || 'Degree'} in ${edu.field_of_study || 'Field'}</h3>
+                <span style="font-size: 12px; color: #6b7280;">${edu.graduation_date || 'Year'}</span>
+              </div>
+              <div style="font-size: 12px; color: #4b5563; margin-bottom: 3px;">${edu.institution || 'Institution Name'}</div>
+              ${edu.gpa ? `<div style="font-size: 11px; color: #6b7280;">GPA: ${edu.gpa}</div>` : ''}
+              ${edu.relevant_coursework?.length ? `
+                <div style="margin-top: 3px;">
+                  <strong style="font-size: 11px;">Relevant Coursework:</strong>
+                  <span style="font-size: 11px; color: #6b7280;"> ${edu.relevant_coursework.join(', ')}</span>
+                </div>
+              ` : ''}
+              ${edu.honors?.length ? `
+                <div style="margin-top: 3px;">
+                  <strong style="font-size: 11px;">Honors:</strong>
+                  <span style="font-size: 11px; color: #059669;"> ${edu.honors.join(', ')}</span>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      <!-- Projects -->
+      ${sections.projects?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">KEY PROJECTS</h2>
+          ${sections.projects.map((project: any) => `
+            <div style="margin-bottom: 15px; page-break-inside: avoid;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px;">
+                <h3 style="font-size: 13px; font-weight: 600; margin: 0; color: #1f2937;">${project.name || 'Project Name'}</h3>
+                <span style="font-size: 11px; color: #6b7280;">${project.duration || 'Duration'}</span>
+              </div>
+              <p style="font-size: 12px; margin-bottom: 5px; line-height: 1.4;">${project.description || 'Project description'}</p>
+              ${project.achievements?.length ? `
+                <ul style="margin: 5px 0 0 15px; padding: 0;">
+                  ${project.achievements.map((achievement: string) => `<li style="margin-bottom: 2px; font-size: 12px; color: #059669;">${achievement}</li>`).join('')}
+                </ul>
+              ` : ''}
+              ${project.technologies?.length ? `
+                <div style="margin-top: 5px;">
+                  <strong style="font-size: 11px; color: #6b7280;">Technologies:</strong>
+                  <span style="font-size: 11px; color: #6b7280;"> ${project.technologies.join(', ')}</span>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      <!-- Certifications -->
+      ${sections.certifications?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">CERTIFICATIONS</h2>
+          ${sections.certifications.map((cert: any) => `
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 12px; color: #1f2937;">${cert.name || 'Certification Name'}</strong>
+                <div style="font-size: 11px; color: #6b7280;">${cert.issuing_organization || 'Issuing Organization'}</div>
+              </div>
+              <div style="text-align: right; font-size: 11px; color: #6b7280;">
+                <div>Issued: ${cert.issue_date || 'Date'}</div>
+                ${cert.expiration_date ? `<div>Expires: ${cert.expiration_date}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      <!-- Awards -->
+      ${sections.awards?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">AWARDS & RECOGNITION</h2>
+          ${sections.awards.map((award: any) => `
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <strong style="font-size: 12px; color: #1f2937;">${award.title || 'Award Title'}</strong>
+                <span style="font-size: 11px; color: #6b7280;">${award.date || 'Date'}</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280;">${award.issuing_organization || 'Organization'}</div>
+              ${award.description ? `<p style="font-size: 11px; margin-top: 2px; line-height: 1.3;">${award.description}</p>` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      <!-- Volunteer Work -->
+      ${sections.volunteer_work?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">VOLUNTEER EXPERIENCE</h2>
+          ${sections.volunteer_work.map((vol: any) => `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px;">
+                <strong style="font-size: 12px; color: #1f2937;">${vol.role || 'Volunteer Role'}</strong>
+                <span style="font-size: 11px; color: #6b7280;">${vol.duration || 'Duration'}</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-bottom: 3px;">${vol.organization || 'Organization Name'}</div>
+              <p style="font-size: 11px; line-height: 1.3; margin-bottom: 3px;">${vol.description || 'Description of volunteer work'}</p>
+              ${vol.achievements?.length ? `
+                <ul style="margin: 3px 0 0 15px; padding: 0;">
+                  ${vol.achievements.map((achievement: string) => `<li style="margin-bottom: 2px; font-size: 11px; color: #059669;">${achievement}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      <!-- Publications -->
+      ${sections.publications?.length ? `
+        <section style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; color: #2563eb; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 10px; font-weight: 600;">PUBLICATIONS</h2>
+          ${sections.publications.map((pub: any) => `
+            <div style="margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                <strong style="font-size: 12px; color: #1f2937;">${pub.title || 'Publication Title'}</strong>
+                <span style="font-size: 11px; color: #6b7280;">${pub.date || 'Date'}</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; font-style: italic; margin-bottom: 2px;">${pub.publication || 'Publication Name'}</div>
+              ${pub.authors?.length ? `<div style="font-size: 10px; color: #6b7280;">Authors: ${pub.authors.join(', ')}</div>` : ''}
+              ${pub.description ? `<p style="font-size: 11px; margin-top: 3px; line-height: 1.3;">${pub.description}</p>` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+    </div>
+  `;
+};
+
+const generateDetailedCoverLetterHTML = (results: any): string => {
+  const coverLetter = results.aiEnhancements?.detailedCoverLetter || {};
+  const jobDetails = results.applicationData || {};
+  // prefer profile -> auth user -> parsed resume -> placeholder
+  const profile = results.detailedUserProfile || {};
+  const authUser = results.user || {};
+  const parsedPersonal = results.parsedResume?.personal || {};
+
+  const name =
+    (profile.fullName && profile.fullName.trim()) ||
+    authUser.displayName ||
+    (parsedPersonal.name && parsedPersonal.name.trim()) ||
+    'Your Name';
+
+  const email =
+    (profile.email && profile.email.trim()) ||
+    authUser.email ||
+    (parsedPersonal.email && parsedPersonal.email.trim()) ||
+    'email@example.com';
+
+  const phone =
+    (profile.phone && profile.phone.trim()) ||
+    (parsedPersonal.phone && parsedPersonal.phone.trim()) ||
+    '';
+
+  const location =
+    (profile.location && profile.location.trim()) ||
+    (parsedPersonal.location && parsedPersonal.location.trim()) ||
+    '';
+
+  return `
+    <div style="font-family: 'Arial', sans-serif; line-height: 1.5; color: #333; max-width: 700px; margin: 0 auto;">
+      <!-- Header -->
+      <header style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 22px; margin-bottom: 8px; color: #1f2937; font-weight: 600;">${name}</h1>
+        <div style="font-size: 13px; color: #6b7280;">
+          <div>${email}${phone ? ` • ${phone}` : ''}</div>
+          ${location ? `<div>${location}</div>` : ''}
+        </div>
+      </header>
+
+      <!-- Date -->
+      <div style="margin-bottom: 25px; text-align: right;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+
+      <!-- Employer Info -->
+      <div style="margin-bottom: 25px;">
+        <p style="font-size: 13px; color: #374151; margin: 0; line-height: 1.4;">
+          Hiring Manager<br>
+          ${jobDetails.company_name || 'Company Name'}<br>
+          ${jobDetails.location || 'Company Location'}
+        </p>
+      </div>
+
+      <!-- Subject Line -->
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 13px; color: #374151; margin: 0;">
+          <strong>Re: Application for ${jobDetails.position || 'Position Title'}</strong>
+        </p>
+      </div>
+
+      <!-- Salutation -->
+      <div style="margin-bottom: 15px;">
+        <p style="font-size: 13px; color: #374151; margin: 0;">Dear Hiring Manager,</p>
+      </div>
+
+      <!-- Opening Paragraph -->
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 13px; line-height: 1.6; text-align: justify; color: #374151; margin: 0;">
+          ${coverLetter.opening_paragraph ||
+    `I am writing to express my strong interest in the ${jobDetails.position || 'Position Title'} role at ${jobDetails.company_name || 'Company Name'}. With my comprehensive background in relevant technologies and proven track record of delivering exceptional results, I am excited about the opportunity to contribute to your team's continued success. My experience aligns perfectly with your requirements, and I am particularly drawn to this position because of its potential for professional growth and the company's reputation for innovation. Having researched your organization extensively, I am confident that my skills and passion make me an ideal candidate for this role.`
+    }
+        </p>
+      </div>
+
+      <!-- Body Paragraph -->
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 13px; line-height: 1.6; text-align: justify; color: #374151; margin: 0;">
+          ${coverLetter.body_paragraph ||
+    `Throughout my career, I have developed extensive expertise in key areas that directly align with your job requirements. In my previous roles, I have successfully led cross-functional teams, implemented innovative solutions that improved efficiency by significant percentages, and consistently delivered projects on time and within budget. My technical skills encompass the full range of technologies mentioned in your job posting, and I have applied these in real-world scenarios to drive measurable business outcomes. For example, I spearheaded initiatives that resulted in substantial cost savings, improved user satisfaction scores, and enhanced system performance metrics. I am particularly excited about the opportunity to bring my passion for problem-solving and my collaborative approach to your dynamic team, where I can contribute to achieving your organization's strategic objectives while continuing to grow professionally. My experience in stakeholder management, agile methodologies, and continuous improvement positions me well to make an immediate impact in this role.`
+    }
+        </p>
+      </div>
+
+      <!-- Closing Paragraph -->
+      <div style="margin-bottom: 25px;">
+        <p style="font-size: 13px; line-height: 1.6; text-align: justify; color: #374151; margin: 0;">
+          ${coverLetter.closing_paragraph ||
+    `I am eager to discuss how my background, skills, and enthusiasm can contribute to ${jobDetails.company_name || 'your company'}'s continued success. I would welcome the opportunity to speak with you about how I can add value to your team and help achieve your business goals. Thank you for your time and consideration. I look forward to hearing from you soon and am available at your convenience for an interview.`
+    }
+        </p>
+      </div>
+
+      <!-- Sign-off -->
+      <div style="margin-bottom: 15px;">
+        <p style="font-size: 13px; color: #374151; margin: 0;">
+          Sincerely,<br><br>
+          ${name}
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center;">
+        <p style="font-size: 11px; color: #9ca3af; margin: 0;">
+          This cover letter was AI-enhanced and personalized for the ${jobDetails.position || 'target position'} at ${jobDetails.company_name || 'the company'}.
+        </p>
+      </div>
+    </div>
+  `;
+};

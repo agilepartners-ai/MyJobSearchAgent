@@ -51,10 +51,10 @@ export interface GenerateCoverLetterRequest {
 }
 
 export class PDFGenerationService {
-    private static readonly API_BASE_URL = import.meta.env.VITE_RESUME_API_BASE_URL || 'https://resumebuilder-arfb.onrender.com';
-    private static readonly API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-    private static readonly DEFAULT_MODEL_TYPE = import.meta.env.VITE_RESUME_API_MODEL_TYPE || 'OpenAI';
-    private static readonly DEFAULT_MODEL = import.meta.env.VITE_RESUME_API_MODEL || 'gpt-4o';
+    private static readonly API_BASE_URL = process.env.NEXT_PUBLIC_RESUME_API_BASE_URL || 'https://resumebuilder-arfb.onrender.com';
+    private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    private static readonly DEFAULT_MODEL_TYPE = process.env.NEXT_PUBLIC_RESUME_API_MODEL_TYPE || 'OpenAI';
+    private static readonly DEFAULT_MODEL = process.env.NEXT_PUBLIC_RESUME_API_MODEL || 'gpt-4o';
 
     // Available LaTeX templates - Updated to match your backend
     static readonly AVAILABLE_TEMPLATES = [
@@ -77,13 +77,15 @@ export class PDFGenerationService {
         
         try {
             // Validate API key
+            console.log(' [DEBUG] PDFGenerationService - API_KEY value:', this.API_KEY ? `${this.API_KEY.substring(0, 20)}...` : 'NOT FOUND');
+            console.log(' [DEBUG] PDFGenerationService - API_KEY length:', this.API_KEY ? this.API_KEY.length : 0);
             if (!this.API_KEY) {
                 throw createApiError(
                     endpoint,
                     'POST',
                     { fileId, hasJobDescription: !!jobDescription, options },
                     null,
-                    'OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.'
+                    'OpenAI API key is not configured or invalid. Please check your environment variables.'
                 );
             }
 
@@ -283,7 +285,7 @@ export class PDFGenerationService {
                     'POST',
                     { fileId, position, companyName, personalInfo, options },
                     null,
-                    'OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.'
+                    'OpenAI API key is not configured. Please set NEXT_PUBLIC_OPENAI_API_KEY in your environment variables.'
                 );
             }
 

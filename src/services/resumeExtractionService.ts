@@ -13,10 +13,10 @@ export interface ResumeExtractionResponse {
 }
 
 export class ResumeExtractionService {
-    private static readonly API_BASE_URL = import.meta.env.VITE_RESUME_API_BASE_URL || 'https://resumebuilder-arfb.onrender.com';
-    private static readonly API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-    private static readonly DEFAULT_MODEL_TYPE = import.meta.env.VITE_RESUME_API_MODEL_TYPE || 'OpenAI';
-    private static readonly DEFAULT_MODEL = import.meta.env.VITE_RESUME_API_MODEL || 'gpt-4o';
+    private static readonly API_BASE_URL = process.env.NEXT_PUBLIC_RESUME_API_BASE_URL || 'https://resumebuilder-arfb.onrender.com';
+    private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    private static readonly DEFAULT_MODEL_TYPE = process.env.NEXT_PUBLIC_RESUME_API_MODEL_TYPE || 'OpenAI';
+    private static readonly DEFAULT_MODEL = process.env.NEXT_PUBLIC_RESUME_API_MODEL || 'gpt-4o';
 
     static async extractResumeJson(
         file: File,
@@ -24,8 +24,10 @@ export class ResumeExtractionService {
     ): Promise<ResumeExtractionResponse> {
         try {
             // Validate API key
+            console.log(' [DEBUG] ResumeExtractionService - API_KEY value:', this.API_KEY ? `${this.API_KEY.substring(0, 20)}...` : 'NOT FOUND');
+            console.log(' [DEBUG] ResumeExtractionService - API_KEY length:', this.API_KEY ? this.API_KEY.length : 0);
             if (!this.API_KEY) {
-                throw new Error('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.');
+                throw new Error('OpenAI API key is not configured or invalid. Please check your environment variables.');
             }
 
             // Create form data
@@ -41,10 +43,6 @@ export class ResumeExtractionService {
             formData.append('model_type', options.modelType || this.DEFAULT_MODEL_TYPE);
             formData.append('model', options.model || this.DEFAULT_MODEL);
             formData.append('file_id', options.fileId || `req_${Date.now()}`);
-
-            console.log('Making request to:', `${this.API_BASE_URL}/api/extract-resume-json`);
-            console.log('Using model:', options.model || this.DEFAULT_MODEL);
-            console.log('Using model type:', options.modelType || this.DEFAULT_MODEL_TYPE);
 
             // Make the request
             const response = await fetch(`${this.API_BASE_URL}/api/extract-resume-json`, {
@@ -64,12 +62,6 @@ export class ResumeExtractionService {
             }
 
             const data = await response.json();
-
-            console.log('Resume extraction successful:', {
-                success: data.success,
-                textLength: data.extracted_text_length,
-                hasResumeJson: !!data.resume_json
-            });
 
             return data;
         } catch (error: any) {
@@ -132,7 +124,7 @@ export class ResumeExtractionService {
         };
     }
 
-    // Parse the extracted resume JSON into a structured format
+    // Parse the extracted resume JSON into a structured format with enhanced detail
     static parseResumeData(resumeJson: any): any {
         try {
             // Handle different possible response formats
@@ -142,7 +134,7 @@ export class ResumeExtractionService {
                 parsedData = JSON.parse(resumeJson);
             }
 
-            // Normalize the data structure
+            // Enhanced normalization with more detailed structure
             return {
                 personal: {
                     name: parsedData.name || parsedData.full_name || '',
@@ -150,8 +142,13 @@ export class ResumeExtractionService {
                     phone: parsedData.phone || parsedData.phone_number || '',
                     location: parsedData.location || parsedData.address || '',
                     linkedin: parsedData.linkedin || parsedData.linkedin_url || '',
-                    website: parsedData.website || parsedData.portfolio || ''
+                    website: parsedData.website || parsedData.portfolio || '',
+                    // Enhanced personal info
+                    summary: parsedData.summary || parsedData.professional_summary || '',
+                    objective: parsedData.objective || ''
                 },
+
+                // Enhanced education with more detail
                 education: Array.isArray(parsedData.education) ? parsedData.education.map((edu: any) => ({
                     school: edu.school || edu.institution || edu.university || '',
                     degree: edu.degree || edu.degree_type || '',
@@ -159,8 +156,15 @@ export class ResumeExtractionService {
                     gpa: edu.gpa || '',
                     start_date: edu.start_date || edu.from || '',
                     end_date: edu.end_date || edu.to || '',
-                    location: edu.location || ''
+                    location: edu.location || '',
+                    // Additional education details
+                    honors: edu.honors || [],
+                    relevant_coursework: edu.relevant_coursework || edu.coursework || [],
+                    thesis: edu.thesis || '',
+                    activities: edu.activities || []
                 })) : [],
+
+                // Enhanced experience with detailed breakdown
                 experience: Array.isArray(parsedData.experience) ? parsedData.experience.map((exp: any) => ({
                     company: exp.company || exp.employer || '',
                     position: exp.position || exp.title || exp.job_title || '',
@@ -169,33 +173,103 @@ export class ResumeExtractionService {
                     location: exp.location || '',
                     highlights: Array.isArray(exp.highlights) ? exp.highlights :
                         Array.isArray(exp.responsibilities) ? exp.responsibilities :
-                            typeof exp.description === 'string' ? [exp.description] : []
+                            typeof exp.description === 'string' ? [exp.description] : [],
+                    // Enhanced experience details
+                    achievements: exp.achievements || [],
+                    technologies: exp.technologies || exp.tech_stack || [],
+                    team_size: exp.team_size || '',
+                    budget_managed: exp.budget_managed || '',
+                    key_metrics: exp.key_metrics || []
                 })) : [],
-                skills: Array.isArray(parsedData.skills) ? parsedData.skills :
-                    typeof parsedData.skills === 'string' ? parsedData.skills.split(',').map((s: string) => s.trim()) : [],
+
+                // Enhanced skills with categorization
+                skills: {
+                    technical: Array.isArray(parsedData.technical_skills) ? parsedData.technical_skills :
+                        Array.isArray(parsedData.skills) ? parsedData.skills :
+                            typeof parsedData.skills === 'string' ? parsedData.skills.split(',').map((s: string) => s.trim()) : [],
+                    soft: parsedData.soft_skills || [],
+                    languages: parsedData.programming_languages || [],
+                    tools: parsedData.tools || [],
+                    frameworks: parsedData.frameworks || []
+                },
+
+                // Enhanced projects with more detail
                 projects: Array.isArray(parsedData.projects) ? parsedData.projects.map((proj: any) => ({
                     title: proj.title || proj.name || '',
                     url: proj.url || proj.link || '',
                     description: proj.description || '',
-                    technologies: Array.isArray(proj.technologies) ? proj.technologies.join(', ') :
-                        typeof proj.technologies === 'string' ? proj.technologies : ''
+                    technologies: Array.isArray(proj.technologies) ? proj.technologies :
+                        typeof proj.technologies === 'string' ? proj.technologies.split(',').map((t: string) => t.trim()) : [],
+                    // Enhanced project details
+                    duration: proj.duration || '',
+                    team_size: proj.team_size || '',
+                    role: proj.role || '',
+                    achievements: proj.achievements || [],
+                    github_url: proj.github_url || proj.github || '',
+                    live_url: proj.live_url || proj.demo || ''
                 })) : [],
+
+                // Enhanced certifications
                 certifications: Array.isArray(parsedData.certifications) ? parsedData.certifications.map((cert: any) => ({
                     name: cert.name || cert.title || '',
                     issuing_organization: cert.issuing_organization || cert.issuer || '',
                     issue_date: cert.issue_date || cert.date || '',
-                    expiration_date: cert.expiration_date || cert.expires || ''
+                    expiration_date: cert.expiration_date || cert.expires || '',
+                    // Enhanced certification details
+                    credential_id: cert.credential_id || cert.id || '',
+                    verification_url: cert.verification_url || cert.url || '',
+                    description: cert.description || ''
                 })) : [],
+
+                // Enhanced awards
                 awards: Array.isArray(parsedData.awards) ? parsedData.awards.map((award: any) => ({
                     title: award.title || award.name || '',
                     issuer: award.issuer || award.organization || '',
                     date_received: award.date_received || award.date || '',
-                    description: award.description || ''
+                    description: award.description || '',
+                    // Enhanced award details
+                    level: award.level || '', // e.g., "National", "Regional", "Company"
+                    value: award.value || '', // monetary value if applicable
+                    criteria: award.criteria || ''
                 })) : [],
+
+                // Enhanced languages
                 languages: Array.isArray(parsedData.languages) ? parsedData.languages.map((lang: any) => ({
                     name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
-                    proficiency: typeof lang === 'object' ? lang.proficiency || lang.level || '' : ''
-                })) : []
+                    proficiency: typeof lang === 'object' ? lang.proficiency || lang.level || '' : '',
+                    // Enhanced language details
+                    certification: lang.certification || '',
+                    years_experience: lang.years_experience || ''
+                })) : [],
+
+                // Additional enhanced sections
+                volunteer: Array.isArray(parsedData.volunteer) ? parsedData.volunteer.map((vol: any) => ({
+                    organization: vol.organization || '',
+                    role: vol.role || vol.position || '',
+                    start_date: vol.start_date || '',
+                    end_date: vol.end_date || '',
+                    description: vol.description || '',
+                    achievements: vol.achievements || []
+                })) : [],
+
+                publications: Array.isArray(parsedData.publications) ? parsedData.publications.map((pub: any) => ({
+                    title: pub.title || '',
+                    publication: pub.publication || pub.journal || '',
+                    date: pub.date || '',
+                    authors: pub.authors || [],
+                    url: pub.url || '',
+                    description: pub.description || ''
+                })) : [],
+
+                // Metadata about the parsing
+                parsing_metadata: {
+                    sections_found: Object.keys(parsedData).length,
+                    has_detailed_experience: Array.isArray(parsedData.experience) && parsedData.experience.length > 0,
+                    has_projects: Array.isArray(parsedData.projects) && parsedData.projects.length > 0,
+                    has_certifications: Array.isArray(parsedData.certifications) && parsedData.certifications.length > 0,
+                    has_education: Array.isArray(parsedData.education) && parsedData.education.length > 0,
+                    extraction_quality: 'enhanced_detailed'
+                }
             };
         } catch (error) {
             console.error('Error parsing resume data:', error);

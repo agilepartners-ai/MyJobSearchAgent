@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Plus, ExternalLink, Settings, Target, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../../hooks/useAuth';
-import SupabaseJobPreferencesService from '../../services/supabaseJobPreferencesService';
-import { JobPreferences } from '../../types/supabase';
+import { JobPreferencesService, JobPreferences } from '../../services/jobPreferencesService';
 
 interface JobSearchForm {
   query: string;
@@ -86,10 +85,13 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
   }, [isOpen]);
 
   const loadJobPreferences = async () => {
-    if (!user) return;
+    if (!user || !user.id) {
+      console.error("User not available for loading job preferences.");
+      return;
+    }
 
     try {
-      const preferences = await SupabaseJobPreferencesService.getUserJobPreferences(user.uid);
+      const preferences = await JobPreferencesService.getJobPreferences(user.id);
       setJobPreferences(preferences);
     } catch (err: any) {
       console.error('Error loading job preferences:', err);
@@ -183,12 +185,12 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
             <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100">Use Your Job Preferences</h3>
-                <button
-                  onClick={applyPreferencesToSearch}
-                  className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                >
-                  Auto-fill
-                </button>
+                  <button
+                    onClick={selectAllJobs}
+                    className="text-sm bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded hover:bg-green-700 dark:hover:bg-green-600"
+                  >
+                    Select All
+                  </button>
               </div>
               <div className="mt-2 space-y-2 text-sm">
                 {jobPreferences.preferred_job_titles && jobPreferences.preferred_job_titles.filter((title: string) => title.trim()).length > 0 && (
@@ -392,10 +394,10 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
                   </button>
                   
                   <button
-                    onClick={onClear}
-                    className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                    onClick={clearSelection}
+                    className="text-sm bg-red-600 dark:bg-red-700 text-white px-3 py-1 rounded hover:bg-red-700 dark:hover:bg-red-600"
                   >
-                    Clear
+                    Clear Selection
                   </button>
                 </div>
               </div>
@@ -412,13 +414,13 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
                 <div className="flex gap-2">
                   <button
                     onClick={selectAllJobs}
-                    className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
+                    className="text-sm bg-green-600 dark:bg-blue-900 text-white dark:text-blue-300 px-3 py-1 rounded hover:bg-green-700 dark:hover:bg-blue-800"
                   >
                     Select All
                   </button>
                   <button
                     onClick={clearSelection}
-                    className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="text-sm bg-red-600 dark:bg-gray-700 text-gray-700 dark:text-gray-700 px-3 py-1 rounded hover:bg-red-700 dark:hover:bg-gray-600"
                   >
                     Clear Selection
                   </button>
@@ -437,8 +439,10 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
                 {searchResults.map((job, index) => (
                   <div 
                     key={index} 
-                    className={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all ${
-                      selectedJobs.has(index) ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' : ''
+                    className={`border rounded-lg p-4 transition-all ${
+                      selectedJobs.has(index) 
+                        ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600' 
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -446,7 +450,7 @@ const JobSearchModal: React.FC<JobSearchModalProps> = ({
                         type="checkbox"
                         checked={selectedJobs.has(index)}
                         onChange={() => toggleJobSelection(index)}
-                        className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="mt-1 rounded border-gray-400 text-blue-600 focus:ring-blue-500"
                       />
                       
                       <div className="flex-1">

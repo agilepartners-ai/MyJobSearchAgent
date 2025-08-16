@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +26,7 @@ const Header: React.FC = () => {
 
   return (
     <header 
-      className={`fixed w-full z-[60] z-50 transition-all duration-300 ${
+      className={`fixed w-full z-[60] transition-all duration-300 ${
         scrolled 
           ? 'bg-gray-900/95 backdrop-blur-sm shadow-lg py-4' 
           : 'bg-transparent py-6'
@@ -34,27 +36,13 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Left side - Main Logo and Powered By Logo */}
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 lg:space-x-5">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
               <img 
                 src="/AGENT_Logo.png" 
                 alt="AIJobSearchAgent" 
                 className="h-6 sm:h-7 md:h-10 lg:h-11 w-auto transition-all duration-300"
               />
             </Link>
-            
-            {/* Powered By Logo - Moved closer with responsive spacing */}
-            <a 
-              href="https://bolt.new/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 items-center justify-center"
-            >
-              <img 
-                src="/logotext_poweredby_360w.png" 
-                alt="Powered By" 
-                className="h-6 sm:h-7 md:h-10 lg:h-11 w-auto opacity-90 hover:opacity-100 transition-all duration-300"
-              />
-            </a>
           </div>
 
           {/* Desktop Navigation */}
@@ -73,7 +61,7 @@ const Header: React.FC = () => {
               </a>
             ))}
             <Link 
-              to="/login" 
+              href="/login" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg transition-all hover:-translate-y-0.5"
             >
               Sign In
@@ -113,7 +101,7 @@ const Header: React.FC = () => {
             </a>
           ))}
           <Link 
-            to="/login" 
+            href="/login" 
             className="block w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium text-center transition-all"
             onClick={() => setIsOpen(false)}
           >
