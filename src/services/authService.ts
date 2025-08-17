@@ -77,25 +77,33 @@ export class AuthService {
   }
 
   static async initializeProvider() {
-    const { getAuthConfig } = await import('../config/authConfig');
-    const config = getAuthConfig();
-    
-    switch (config.provider) {
-      case 'firebase':
-        const { FirebaseAuthProvider } = await import('./auth/FirebaseAuthProvider');
-        this.setProvider(new FirebaseAuthProvider());
-        break;
-      case 'auth0':
-        // TODO: Implement Auth0 provider
-        throw new Error('Auth0 provider not implemented yet');
-      case 'supabase':
-        // TODO: Implement Supabase provider
-        throw new Error('Supabase provider not implemented yet');
-      case 'custom':
-        // TODO: Implement custom provider
-        throw new Error('Custom provider not implemented yet');
-      default:
-        throw new Error(`Unknown auth provider: ${config.provider}`);
+    try {
+      const { getAuthConfig } = await import('../config/authConfig');
+      const config = getAuthConfig();
+      
+      switch (config.provider) {
+        case 'firebase':
+          const { FirebaseAuthProvider } = await import('./auth/FirebaseAuthProvider');
+          this.setProvider(new FirebaseAuthProvider());
+          break;
+        case 'auth0':
+          // TODO: Implement Auth0 provider
+          throw new Error('Auth0 provider not implemented yet');
+        case 'supabase':
+          // TODO: Implement Supabase provider
+          throw new Error('Supabase provider not implemented yet');
+        case 'custom':
+          // TODO: Implement custom provider
+          throw new Error('Custom provider not implemented yet');
+        default:
+          throw new Error(`Unknown auth provider: ${config.provider}`);
+      }
+    } catch (error) {
+      console.error('Failed to initialize auth provider:', error);
+      // In development or during build, we can continue without auth
+      if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+        throw error;
+      }
     }
   }
 

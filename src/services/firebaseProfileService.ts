@@ -27,6 +27,17 @@ export class FirebaseProfileService {
     email: string,
     fullName: string
   ): Promise<Profile> {
+    if (!db) {
+      console.warn('Firebase Firestore not initialized');
+      // Return a mock profile for development
+      return {
+        id: uid,
+        email,
+        full_name: fullName,
+        created_at: new Date().toISOString(),
+      };
+    }
+
     const profileDocRef: DocumentReference<DocumentData> = doc(db, 'users', uid);
     const docSnap = await getDoc(profileDocRef);
 

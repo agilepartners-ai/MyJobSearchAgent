@@ -90,6 +90,11 @@ export class FirebaseAuthProvider implements AuthProvider {
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
+    if (!auth) {
+      console.warn('Firebase auth not initialized');
+      return null;
+    }
+    
     return new Promise((resolve) => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         unsubscribe();
@@ -173,6 +178,12 @@ export class FirebaseAuthProvider implements AuthProvider {
   }
 
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
+    if (!auth) {
+      console.warn('Firebase auth not initialized');
+      // Return a no-op unsubscribe function
+      return () => {};
+    }
+    
     return onAuthStateChanged(auth, (user) => {
       callback(user ? this.convertUser(user) : null);
     });
