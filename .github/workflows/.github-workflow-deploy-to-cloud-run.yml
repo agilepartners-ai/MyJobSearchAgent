@@ -2,12 +2,10 @@ name: Deploy to Cloud Run
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
       
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
