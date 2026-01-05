@@ -74,19 +74,12 @@ export class JobSearchService {
 
       const data = await response.json();
       
-      // Validate success flag first - if explicitly false, treat as error
-      if (data.success === false) {
-        const errorMessage = data.message || data.error || 'Job search failed';
-        console.error('Job search returned failure:', data);
-        throw new Error(`Job search failed: ${errorMessage}`);
-      }
-
-      // Handle successful response from Supabase function (already formatted)
-      if (data.success === true && Array.isArray(data.jobs)) {
+      // Handle response from Supabase function (already formatted)
+      if (data.success && Array.isArray(data.jobs)) {
         return data;
       }
 
-      // Fallback for old format or missing success flag
+      // Fallback for old format
       if (!data.jobs || !Array.isArray(data.jobs)) {
         console.warn('No jobs data found in response:', data);
         return {
@@ -101,20 +94,7 @@ export class JobSearchService {
         };
       }
 
-      // If we have jobs array but success is undefined/null, treat as success
-      // but log a warning about inconsistent response format
-      if (Array.isArray(data.jobs) && (data.success === undefined || data.success === null)) {
-        console.warn('Job search response missing success flag, assuming success:', data);
-        return {
-          ...data,
-          success: true,
-          message: data.message || 'Jobs retrieved successfully'
-        };
-      }
-
-      // Final fallback - if we reach here, something unexpected happened
-      console.error('Unexpected job search response format:', data);
-      throw new Error('Invalid job search response format');
+      return data;
 
     } catch (error) {
       console.error('Error searching jobs:', error);
