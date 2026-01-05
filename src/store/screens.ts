@@ -7,8 +7,6 @@ export type Screen =
   | "intro"
   | "instructions"
   | "settings"
-  | "positiveFeedback"
-  | "negativeFeedback"
   | "finalScreen"
   | "sessionEnded";
 
