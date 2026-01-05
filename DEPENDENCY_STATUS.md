@@ -58,3 +58,4 @@ To completely remove all deprecated warnings, you would need to:
 ⚠️ **Deprecated transitive dependencies** remain (from ESLint 8, required by Next.js 15)
 ✅ **No legacy-peer-deps flag needed** - All dependencies install cleanly
 
+

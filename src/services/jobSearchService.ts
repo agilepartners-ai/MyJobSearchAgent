@@ -47,6 +47,14 @@ export class JobSearchService {
       const { supabase } = await import('@/lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
 
+      // Ensure we have a valid token
+      const accessToken = session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!accessToken || !apiKey) {
+        throw new Error('Authentication required. Please ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is configured.');
+      }
+
       // Call Supabase Edge Function
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}${this.SUPABASE_FUNCTION_URL}`,
@@ -54,8 +62,8 @@ export class JobSearchService {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': apiKey
           },
           body: JSON.stringify({
             jobProfile: params.jobProfile,

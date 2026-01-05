@@ -24,6 +24,8 @@ import JobPreferencesModal from './JobPreferencesModal';
 import JobSearchModal from './JobSearchModal';
 import ProfileModal from './ProfileModal';
 import AIEnhancementModal from './AIEnhancementModal';
+import InterviewFlowTracker from './InterviewFlowTracker';
+import CoffeeChatTracker from './CoffeeChatTracker';
 import { JobApplication, ApplicationStats, SupabaseJobApplicationService } from '../../services/supabaseJobApplicationService';
 import { JobSearchService } from '../../services/jobSearchService';
 import { useAuth } from '../../hooks/useAuth';
@@ -66,6 +68,8 @@ const Dashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'applications' | 'interviews' | 'coffee-chats'>('applications');
+  const [selectedApplicationForInterview, setSelectedApplicationForInterview] = useState<JobApplication | null>(null);
   const [stats, setStats] = useState<ApplicationStats>({
     total: 0,
     interviews: 0,
@@ -476,19 +480,116 @@ const Dashboard: React.FC = () => {
 
         <StatsCards stats={stats} />
 
+        {/* Tabs */}
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('applications')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'applications'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              Applications
+            </button>
+            <button
+              onClick={() => setActiveTab('interviews')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'interviews'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              Interview Flow (OA)
+            </button>
+            <button
+              onClick={() => setActiveTab('coffee-chats')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'coffee-chats'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              Coffee Chats
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
         <div className="space-y-8">
-          <ApplicationsTable
-            applications={[...applications, ...combinedListings].map(app => ({ ...app, updated_at: app.updated_at ?? '' }))}
-            searchTerm={searchTerm}
-            statusFilter={statusFilter}
-            onSearchTermChange={setSearchTerm}
-            onStatusFilterChange={setStatusFilter}
-            onEditApplication={handleEditApplication}
-            onViewJobDescription={handleViewJobDescription}
-            onDeleteApplication={handleDeleteApplication}
-            onUpdateApplicationStatus={handleUpdateApplicationStatus}
-            onLoadAIEnhanced={handleLoadAIEnhanced}
-          />
+          {activeTab === 'applications' && (
+            <ApplicationsTable
+              applications={[...applications, ...combinedListings].map(app => ({ ...app, updated_at: app.updated_at ?? '' }))}
+              searchTerm={searchTerm}
+              statusFilter={statusFilter}
+              onSearchTermChange={setSearchTerm}
+              onStatusFilterChange={setStatusFilter}
+              onEditApplication={handleEditApplication}
+              onViewJobDescription={handleViewJobDescription}
+              onDeleteApplication={handleDeleteApplication}
+              onUpdateApplicationStatus={handleUpdateApplicationStatus}
+              onLoadAIEnhanced={handleLoadAIEnhanced}
+            />
+          )}
+
+          {activeTab === 'interviews' && (
+            <div className="space-y-6">
+              {applications.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <p>No applications yet. Start by adding an application to track interview progress!</p>
+                </div>
+              ) : (
+                <>
+                  {selectedApplicationForInterview ? (
+                    <div>
+                      <button
+                        onClick={() => setSelectedApplicationForInterview(null)}
+                        className="mb-4 text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        ← Back to all applications
+                      </button>
+                      <InterviewFlowTracker
+                        application={selectedApplicationForInterview}
+                        onUpdate={handleSaveApplication}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        Select an application to view its interview flow and track OA progress:
+                      </p>
+                      {applications.map((app) => (
+                        <div
+                          key={app.id}
+                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setSelectedApplicationForInterview(app)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
+                                {app.company_name} - {app.position}
+                              </h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Applied: {new Date(app.application_date).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+                              {app.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'coffee-chats' && user && (
+            <CoffeeChatTracker userId={user.id} />
+          )}
         </div>
       </main>
       {/* Modals */}

@@ -103,12 +103,30 @@ export class SupabaseAuthProvider implements AuthProvider {
       
       if (error) {
         console.error('Error getting current user:', error);
+        
+        // If user doesn't exist in auth.users, clear the session
+        if (error.message?.includes('does not exist') || error.message?.includes('JWT')) {
+          console.warn('User from JWT does not exist, clearing session...');
+          await supabase.auth.signOut();
+        }
+        
         return null;
       }
 
       return user ? this.convertUser(user) : null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting current user:', error);
+      
+      // If user doesn't exist, clear the session
+      if (error?.message?.includes('does not exist') || error?.message?.includes('JWT')) {
+        console.warn('User from JWT does not exist, clearing session...');
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error('Error signing out:', signOutError);
+        }
+      }
+      
       return null;
     }
   }
@@ -239,8 +257,37 @@ export class SupabaseAuthProvider implements AuthProvider {
   }
 
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      callback(session?.user ? this.convertUser(session.user) : null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Handle token refresh and user validation
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        // Verify the user still exists
+        if (session?.user) {
+          try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error || !user) {
+              console.warn('User validation failed, clearing session');
+              await supabase.auth.signOut();
+              callback(null);
+              return;
+            }
+            callback(this.convertUser(user));
+          } catch (error: any) {
+            console.error('Error validating user:', error);
+            if (error?.message?.includes('does not exist') || error?.message?.includes('JWT')) {
+              await supabase.auth.signOut();
+              callback(null);
+              return;
+            }
+            callback(session?.user ? this.convertUser(session.user) : null);
+          }
+        } else {
+          callback(null);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        callback(null);
+      } else {
+        callback(session?.user ? this.convertUser(session.user) : null);
+      }
     });
 
     return () => {

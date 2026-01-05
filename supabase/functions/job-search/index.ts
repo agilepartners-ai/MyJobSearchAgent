@@ -126,4 +126,3 @@ serve(async (req) => {
     )
   }
 })
-
