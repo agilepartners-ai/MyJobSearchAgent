@@ -1,6 +1,11 @@
+import { WorkExperience } from './workExperience';
+import { Education } from './education';
+import { Certification } from './certification';
+
 /**
  * Resume Document Schema - JSON Document Structure
  * Each resume is stored as a complete JSON document object
+ * Uses object-oriented classes for structured data
  */
 export interface ResumeDocument {
   // Document metadata
@@ -32,40 +37,11 @@ export interface ResumeDocument {
     objective?: string;
   };
 
-  // Education
-  education: Array<{
-    id?: string;
-    institution: string;
-    degree: string;
-    field_of_study?: string;
-    gpa?: string;
-    start_date?: string;
-    end_date?: string;
-    graduation_date?: string;
-    location?: string;
-    honors?: string[];
-    relevant_coursework?: string[];
-    thesis?: string;
-    activities?: string[];
-    is_current?: boolean;
-  }>;
+  // Education - Array of Education objects
+  education: Education[];
 
-  // Work Experience
-  experience: Array<{
-    id?: string;
-    company: string;
-    position: string;
-    start_date: string;
-    end_date?: string;
-    location?: string;
-    is_current?: boolean;
-    description?: string;
-    highlights?: string[];
-    achievements?: string[];
-    technologies_used?: string[];
-    quantified_results?: string[];
-    key_responsibilities?: string[];
-  }>;
+  // Work Experience - Array of WorkExperience objects
+  experience: WorkExperience[];
 
   // Skills
   skills: {
@@ -75,14 +51,7 @@ export interface ResumeDocument {
       name: string;
       proficiency: 'Basic' | 'Intermediate' | 'Advanced' | 'Native' | 'Fluent';
     }>;
-    certifications?: Array<{
-      name: string;
-      issuing_organization: string;
-      issue_date: string;
-      expiration_date?: string;
-      credential_id?: string;
-      credential_url?: string;
-    }>;
+    certifications?: Certification[]; // Array of Certification objects
   };
 
   // Projects

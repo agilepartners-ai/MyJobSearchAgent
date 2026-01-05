@@ -4,6 +4,10 @@ export interface ResumeExtractionOptions {
     fileId?: string;
 }
 
+import { WorkExperience } from '@/types/workExperience';
+import { Education } from '@/types/education';
+import { Certification } from '@/types/certification';
+
 export interface ResumeExtractionResponse {
     success: boolean;
     resume_json: any;
@@ -148,39 +152,39 @@ export class ResumeExtractionService {
                     objective: parsedData.objective || ''
                 },
 
-                // Enhanced education with more detail
-                education: Array.isArray(parsedData.education) ? parsedData.education.map((edu: any) => ({
-                    school: edu.school || edu.institution || edu.university || '',
-                    degree: edu.degree || edu.degree_type || '',
-                    field: edu.field || edu.major || edu.field_of_study || '',
-                    gpa: edu.gpa || '',
-                    start_date: edu.start_date || edu.from || '',
-                    end_date: edu.end_date || edu.to || '',
-                    location: edu.location || '',
-                    // Additional education details
-                    honors: edu.honors || [],
-                    relevant_coursework: edu.relevant_coursework || edu.coursework || [],
-                    thesis: edu.thesis || '',
-                    activities: edu.activities || []
-                })) : [],
+                // Enhanced education with more detail - returns Education class instances
+                education: Array.isArray(parsedData.education) ? parsedData.education.map((edu: any) => 
+                    Education.fromJSON({
+                        institution: edu.school || edu.institution || edu.university || '',
+                        degree: edu.degree || edu.degree_type || '',
+                        field_of_study: edu.field || edu.major || edu.field_of_study || '',
+                        gpa: edu.gpa || '',
+                        start_date: edu.start_date || edu.from || '',
+                        end_date: edu.end_date || edu.to || '',
+                        graduation_date: edu.end_date || edu.to || '',
+                        location: edu.location || '',
+                        honors: edu.honors || [],
+                        relevant_coursework: edu.relevant_coursework || edu.coursework || [],
+                        thesis: edu.thesis || '',
+                        activities: edu.activities || []
+                    })
+                ) : [],
 
-                // Enhanced experience with detailed breakdown
-                experience: Array.isArray(parsedData.experience) ? parsedData.experience.map((exp: any) => ({
-                    company: exp.company || exp.employer || '',
-                    position: exp.position || exp.title || exp.job_title || '',
-                    start_date: exp.start_date || exp.from || '',
-                    end_date: exp.end_date || exp.to || '',
-                    location: exp.location || '',
-                    highlights: Array.isArray(exp.highlights) ? exp.highlights :
-                        Array.isArray(exp.responsibilities) ? exp.responsibilities :
-                            typeof exp.description === 'string' ? [exp.description] : [],
-                    // Enhanced experience details
-                    achievements: exp.achievements || [],
-                    technologies: exp.technologies || exp.tech_stack || [],
-                    team_size: exp.team_size || '',
-                    budget_managed: exp.budget_managed || '',
-                    key_metrics: exp.key_metrics || []
-                })) : [],
+                // Enhanced experience with detailed breakdown - returns WorkExperience class instances
+                experience: Array.isArray(parsedData.experience) ? parsedData.experience.map((exp: any) => 
+                    WorkExperience.fromJSON({
+                        company: exp.company || exp.employer || '',
+                        position: exp.position || exp.title || exp.job_title || '',
+                        start_date: exp.start_date || exp.from || '',
+                        end_date: exp.end_date || exp.to || '',
+                        location: exp.location || '',
+                        highlights: Array.isArray(exp.highlights) ? exp.highlights :
+                            Array.isArray(exp.responsibilities) ? exp.responsibilities :
+                                typeof exp.description === 'string' ? [exp.description] : [],
+                        achievements: exp.achievements || [],
+                        technologies_used: exp.technologies || exp.tech_stack || [],
+                    })
+                ) : [],
 
                 // Enhanced skills with categorization
                 skills: {
@@ -209,17 +213,18 @@ export class ResumeExtractionService {
                     live_url: proj.live_url || proj.demo || ''
                 })) : [],
 
-                // Enhanced certifications
-                certifications: Array.isArray(parsedData.certifications) ? parsedData.certifications.map((cert: any) => ({
-                    name: cert.name || cert.title || '',
-                    issuing_organization: cert.issuing_organization || cert.issuer || '',
-                    issue_date: cert.issue_date || cert.date || '',
-                    expiration_date: cert.expiration_date || cert.expires || '',
-                    // Enhanced certification details
-                    credential_id: cert.credential_id || cert.id || '',
-                    verification_url: cert.verification_url || cert.url || '',
-                    description: cert.description || ''
-                })) : [],
+                // Enhanced certifications - returns Certification class instances
+                certifications: Array.isArray(parsedData.certifications) ? parsedData.certifications.map((cert: any) => 
+                    Certification.fromJSON({
+                        name: cert.name || cert.title || '',
+                        issuing_organization: cert.issuing_organization || cert.issuer || '',
+                        issue_date: cert.issue_date || cert.date || '',
+                        expiration_date: cert.expiration_date || cert.expires || '',
+                        credential_id: cert.credential_id || cert.id || '',
+                        credential_url: cert.verification_url || cert.url || '',
+                        description: cert.description || ''
+                    })
+                ) : [],
 
                 // Enhanced awards
                 awards: Array.isArray(parsedData.awards) ? parsedData.awards.map((award: any) => ({

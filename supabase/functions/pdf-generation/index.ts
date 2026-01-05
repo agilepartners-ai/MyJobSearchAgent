@@ -1,9 +1,157 @@
 // Supabase Edge Function: PDF Generation
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Helper function to create a basic PDF from resume data
+async function generatePDF(resumeData: any, jobDescription: string, template: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create()
+  const page = pdfDoc.addPage([612, 792]) // US Letter size
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  
+  let yPosition = 750
+  const margin = 50
+  const lineHeight = 14
+  const sectionSpacing = 20
+  
+  // Helper to add text with word wrapping
+  const addText = (text: string, x: number, y: number, size: number, isBold: boolean = false) => {
+    const maxWidth = 512
+    const words = text.split(' ')
+    let line = ''
+    let currentY = y
+    
+    for (const word of words) {
+      const testLine = line + (line ? ' ' : '') + word
+      const width = (isBold ? boldFont : font).widthOfTextAtSize(testLine, size)
+      
+      if (width > maxWidth && line) {
+        page.drawText(line, {
+          x,
+          y: currentY,
+          size,
+          font: isBold ? boldFont : font,
+        })
+        line = word
+        currentY -= lineHeight
+      } else {
+        line = testLine
+      }
+    }
+    
+    if (line) {
+      page.drawText(line, {
+        x,
+        y: currentY,
+        size,
+        font: isBold ? boldFont : font,
+      })
+      currentY -= lineHeight
+    }
+    
+    return currentY
+  }
+  
+  // Header: Personal Information
+  if (resumeData?.personal) {
+    const personal = resumeData.personal
+    yPosition = addText(personal.name || 'Resume', margin, yPosition, 20, true)
+    yPosition -= 5
+    
+    const contactInfo = [
+      personal.email,
+      personal.phone,
+      personal.location
+    ].filter(Boolean).join(' | ')
+    
+    if (contactInfo) {
+      yPosition = addText(contactInfo, margin, yPosition, 10)
+    }
+    yPosition -= sectionSpacing
+  }
+  
+  // Professional Summary
+  if (resumeData?.personal?.summary) {
+    yPosition = addText('PROFESSIONAL SUMMARY', margin, yPosition, 12, true)
+    yPosition -= 5
+    yPosition = addText(resumeData.personal.summary, margin, yPosition, 10)
+    yPosition -= sectionSpacing
+  }
+  
+  // Experience
+  if (resumeData?.experience && Array.isArray(resumeData.experience)) {
+    yPosition = addText('EXPERIENCE', margin, yPosition, 12, true)
+    yPosition -= 5
+    
+    for (const exp of resumeData.experience) {
+      const title = `${exp.position || ''} - ${exp.company || ''}`
+      const dates = exp.is_current 
+        ? `${exp.start_date || ''} - Present`
+        : `${exp.start_date || ''} - ${exp.end_date || ''}`
+      
+      yPosition = addText(title, margin, yPosition, 11, true)
+      yPosition = addText(dates, margin, yPosition, 9)
+      yPosition -= 5
+      
+      if (exp.description) {
+        yPosition = addText(exp.description, margin, yPosition, 10)
+      }
+      
+      if (exp.achievements && Array.isArray(exp.achievements)) {
+        for (const achievement of exp.achievements) {
+          yPosition = addText(`• ${achievement}`, margin + 10, yPosition, 10)
+        }
+      }
+      
+      yPosition -= sectionSpacing
+      
+      // Add new page if needed
+      if (yPosition < 100) {
+        const newPage = pdfDoc.addPage([612, 792])
+        yPosition = 750
+      }
+    }
+  }
+  
+  // Education
+  if (resumeData?.education && Array.isArray(resumeData.education)) {
+    yPosition = addText('EDUCATION', margin, yPosition, 12, true)
+    yPosition -= 5
+    
+    for (const edu of resumeData.education) {
+      const eduText = `${edu.degree || ''}${edu.field_of_study ? ` in ${edu.field_of_study}` : ''} - ${edu.institution || ''}`
+      yPosition = addText(eduText, margin, yPosition, 10)
+      
+      if (edu.graduation_date) {
+        yPosition = addText(edu.graduation_date, margin, yPosition, 9)
+      }
+      
+      yPosition -= sectionSpacing
+    }
+  }
+  
+  // Skills
+  if (resumeData?.skills) {
+    yPosition = addText('SKILLS', margin, yPosition, 12, true)
+    yPosition -= 5
+    
+    const skillsList = [
+      ...(resumeData.skills.technical || []),
+      ...(resumeData.skills.soft || [])
+    ]
+    
+    if (skillsList.length > 0) {
+      yPosition = addText(skillsList.join(', '), margin, yPosition, 10)
+    }
+  }
+  
+  return await pdfDoc.save()
 }
 
 serve(async (req) => {
@@ -37,24 +185,70 @@ serve(async (req) => {
       )
     }
 
-    // For now, return a placeholder response
-    // PDF generation would require additional libraries like puppeteer or pdfkit
-    // This is a simplified version that returns the optimized content
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Get user ID from request headers (from auth token)
+    const authHeader = req.headers.get('Authorization')
+    let userId: string | null = null
     
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'PDF generation endpoint ready. PDF generation requires additional setup.',
-        file_id: file_id,
-        template: template,
-        note: 'PDF generation requires server-side PDF library. Consider using a service like Puppeteer or PDFKit.'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    if (authHeader) {
+      try {
+        // Extract user from JWT token (simplified - in production, verify the token properly)
+        const token = authHeader.replace('Bearer ', '')
+        // For now, we'll fetch the resume by file_id and let RLS handle authorization
+      } catch (e) {
+        console.error('Error parsing auth header:', e)
+      }
+    }
+
+    // If resume_data is provided, use it directly
+    // Otherwise, fetch from Supabase database using file_id
+    let resumeData = resume_data
+    
+    if (!resumeData) {
+      // Fetch resume data from Supabase
+      const { data: resumeRecord, error: fetchError } = await supabase
+        .from('resumes')
+        .select('resume_data')
+        .eq('id', file_id)
+        .single()
+
+      if (fetchError || !resumeRecord) {
+        return new Response(
+          JSON.stringify({ error: `Resume not found: ${fetchError?.message || 'Unknown error'}` }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      resumeData = resumeRecord.resume_data
+    }
+    
+    if (!resumeData) {
+      return new Response(
+        JSON.stringify({ error: 'Resume data is required for PDF generation' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Generate PDF
+    const pdfBytes = await generatePDF(resumeData, job_description, template)
+    
+    // Return PDF with correct content-type
+    return new Response(pdfBytes, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="resume_${file_id}.pdf"`
+      }
+    })
 
   } catch (error) {
+    console.error('PDF generation error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Failed to generate PDF' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

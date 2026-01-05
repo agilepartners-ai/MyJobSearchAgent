@@ -121,18 +121,42 @@ serve(async (req) => {
     const openaiData = await openaiResponse.json()
     const aiResults = JSON.parse(openaiData.choices[0]?.message?.content || '{}')
 
+    // Ensure all required fields are properly initialized with defaults
     return new Response(
       JSON.stringify({
         success: true,
         analysis: {
           match_score: aiResults.match_score || 0,
-          strengths: aiResults.analysis?.strengths || [],
-          gaps: aiResults.analysis?.gaps || [],
-          suggestions: aiResults.analysis?.suggestions || [],
-          keyword_analysis: aiResults.analysis?.keyword_analysis || {},
-          section_recommendations: aiResults.analysis?.section_recommendations || {}
+          strengths: Array.isArray(aiResults.analysis?.strengths) ? aiResults.analysis.strengths : [],
+          gaps: Array.isArray(aiResults.analysis?.gaps) ? aiResults.analysis.gaps : [],
+          suggestions: Array.isArray(aiResults.analysis?.suggestions) ? aiResults.analysis.suggestions : [],
+          keyword_analysis: {
+            missing_keywords: Array.isArray(aiResults.analysis?.keyword_analysis?.missing_keywords)
+              ? aiResults.analysis.keyword_analysis.missing_keywords : [],
+            present_keywords: Array.isArray(aiResults.analysis?.keyword_analysis?.present_keywords)
+              ? aiResults.analysis.keyword_analysis.present_keywords : [],
+            keyword_density_score: aiResults.analysis?.keyword_analysis?.keyword_density_score || 0
+          },
+          section_recommendations: {
+            skills: aiResults.analysis?.section_recommendations?.skills || '',
+            experience: aiResults.analysis?.section_recommendations?.experience || '',
+            education: aiResults.analysis?.section_recommendations?.education || ''
+          }
         },
-        enhancements: aiResults.enhancements || {},
+        enhancements: {
+          enhanced_summary: aiResults.enhancements?.enhanced_summary || '',
+          enhanced_skills: Array.isArray(aiResults.enhancements?.enhanced_skills)
+            ? aiResults.enhancements.enhanced_skills : [],
+          enhanced_experience_bullets: Array.isArray(aiResults.enhancements?.enhanced_experience_bullets)
+            ? aiResults.enhancements.enhanced_experience_bullets : [],
+          cover_letter_outline: {
+            opening: aiResults.enhancements?.cover_letter_outline?.opening || '',
+            body: aiResults.enhancements?.cover_letter_outline?.body || '',
+            closing: aiResults.enhancements?.cover_letter_outline?.closing || ''
+          },
+          detailed_resume_sections: aiResults.enhancements?.detailed_resume_sections || {},
+          detailed_cover_letter: aiResults.enhancements?.detailed_cover_letter || {}
+        },
         metadata: {
           model_used: model,
           model_type: 'OpenAI',
@@ -145,8 +169,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { ResumeDocument, ResumeDocumentSummary } from '@/types/resumeDocument';
+import { WorkExperience } from '@/types/workExperience';
+import { Education } from '@/types/education';
+import { Certification } from '@/types/certification';
 
 export class ResumeDocumentService {
   /**
@@ -10,21 +13,28 @@ export class ResumeDocumentService {
     resumeData: Omit<ResumeDocument, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'version'>
   ): Promise<ResumeDocument> {
     try {
-      // If this is set as active, ensure it's the only active one
-      const resumeDocument: Partial<ResumeDocument> = {
+      // Ensure arrays are properly initialized
+      const resumeDocument: Omit<ResumeDocument, 'id' | 'created_at' | 'updated_at'> = {
         ...resumeData,
         user_id: userId,
         version: 1,
         is_active: resumeData.is_active ?? false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        education: resumeData.education || [],
+        experience: resumeData.experience || [],
+        skills: {
+          ...resumeData.skills,
+          certifications: resumeData.skills?.certifications || [],
+        },
       };
+
+      // Convert class instances to JSON for storage
+      const resumeDataForStorage = this.serializeResumeDocumentForStorage(resumeDocument);
 
       const { data, error } = await supabase
         .from('resumes')
         .insert({
           user_id: userId,
-          resume_data: resumeDocument,
+          resume_data: resumeDataForStorage,
           version: 1,
           is_active: resumeDocument.is_active,
           tags: resumeData.tags || [],
@@ -147,10 +157,13 @@ export class ResumeDocumentService {
         version: updates.version || currentResume.version + 1,
       };
 
+      // Convert class instances to JSON for storage
+      const resumeDataForStorage = this.serializeResumeDocumentForStorage(updatedResume);
+
       const { data, error } = await supabase
         .from('resumes')
         .update({
-          resume_data: updatedResume,
+          resume_data: resumeDataForStorage,
           version: updatedResume.version,
           is_active: updatedResume.is_active,
           tags: updatedResume.tags || [],
@@ -261,11 +274,13 @@ export class ResumeDocumentService {
   }
 
   /**
-   * Map database row to ResumeDocument
+   * Map database row to ResumeDocument with class instances
    */
   private static mapToResumeDocument(row: any): ResumeDocument {
+    const resumeData = row.resume_data || {};
+    
     return {
-      ...row.resume_data,
+      ...resumeData,
       id: row.id,
       user_id: row.user_id,
       version: row.version,
@@ -274,6 +289,13 @@ export class ResumeDocumentService {
       notes: row.notes || undefined,
       created_at: row.created_at,
       updated_at: row.updated_at,
+      // Convert arrays to class instances
+      education: (resumeData.education || []).map((edu: any) => Education.fromJSON(edu)),
+      experience: (resumeData.experience || []).map((exp: any) => WorkExperience.fromJSON(exp)),
+      skills: {
+        ...resumeData.skills,
+        certifications: (resumeData.skills?.certifications || []).map((cert: any) => Certification.fromJSON(cert)),
+      },
     };
   }
 
@@ -299,43 +321,76 @@ export class ResumeDocumentService {
         summary: extractedData.personal?.summary || undefined,
         objective: extractedData.personal?.objective || undefined,
       },
-      education: (extractedData.education || []).map((edu: any) => ({
-        institution: edu.school || edu.institution || '',
-        degree: edu.degree || '',
-        field_of_study: edu.field || edu.major || undefined,
-        gpa: edu.gpa || undefined,
-        start_date: edu.start_date || undefined,
-        end_date: edu.end_date || undefined,
-        graduation_date: edu.end_date || undefined,
-        location: edu.location || undefined,
-        honors: edu.honors || [],
-        relevant_coursework: edu.relevant_coursework || [],
-        thesis: edu.thesis || undefined,
-        activities: edu.activities || [],
-      })),
-      experience: (extractedData.experience || []).map((exp: any) => ({
-        company: exp.company || '',
-        position: exp.position || '',
-        start_date: exp.start_date || '',
-        end_date: exp.end_date || undefined,
-        location: exp.location || undefined,
-        is_current: exp.is_current || false,
-        description: exp.description || undefined,
-        highlights: exp.highlights || [],
-        achievements: exp.achievements || [],
-        technologies_used: exp.technologies || [],
-      })),
+      education: (extractedData.education || []).map((edu: any) => 
+        Education.fromJSON({
+          institution: edu.school || edu.institution || '',
+          degree: edu.degree || '',
+          field_of_study: edu.field || edu.major || undefined,
+          gpa: edu.gpa || undefined,
+          start_date: edu.start_date || undefined,
+          end_date: edu.end_date || undefined,
+          graduation_date: edu.end_date || undefined,
+          location: edu.location || undefined,
+          honors: edu.honors || [],
+          relevant_coursework: edu.relevant_coursework || [],
+          thesis: edu.thesis || undefined,
+          activities: edu.activities || [],
+        })
+      ),
+      experience: (extractedData.experience || []).map((exp: any) => 
+        WorkExperience.fromJSON({
+          company: exp.company || '',
+          position: exp.position || '',
+          start_date: exp.start_date || '',
+          end_date: exp.end_date || undefined,
+          location: exp.location || undefined,
+          is_current: exp.is_current || false,
+          description: exp.description || undefined,
+          highlights: exp.highlights || [],
+          achievements: exp.achievements || [],
+          technologies_used: exp.technologies || [],
+        })
+      ),
       skills: {
         technical: extractedData.skills || [],
         soft: extractedData.soft_skills || [],
         languages: extractedData.languages || [],
-        certifications: extractedData.certifications || [],
+        certifications: (extractedData.certifications || []).map((cert: any) => 
+          Certification.fromJSON({
+            name: cert.name || '',
+            issuing_organization: cert.issuing_organization || cert.issuer || '',
+            issue_date: cert.issue_date || cert.date || '',
+            expiration_date: cert.expiration_date || cert.expires || undefined,
+            credential_id: cert.credential_id || cert.id || undefined,
+            credential_url: cert.credential_url || cert.url || undefined,
+            description: cert.description || undefined,
+          })
+        ),
       },
       projects: extractedData.projects || [],
       awards: extractedData.awards || [],
       volunteer_work: extractedData.volunteer_work || [],
       publications: extractedData.publications || [],
       file_references: fileReferences,
+    };
+  }
+
+  /**
+   * Serialize ResumeDocument with class instances to JSON for database storage
+   */
+  private static serializeResumeDocumentForStorage(
+    resume: ResumeDocument | Omit<ResumeDocument, 'id' | 'created_at' | 'updated_at'>
+  ): any {
+    return {
+      ...resume,
+      education: resume.education.map(edu => edu instanceof Education ? edu.toJSON() : edu),
+      experience: resume.experience.map(exp => exp instanceof WorkExperience ? exp.toJSON() : exp),
+      skills: {
+        ...resume.skills,
+        certifications: resume.skills.certifications?.map(cert => 
+          cert instanceof Certification ? cert.toJSON() : cert
+        ) || [],
+      },
     };
   }
 }

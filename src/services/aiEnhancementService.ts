@@ -594,10 +594,37 @@ Make sure all content is:
 
             const aiResults = await response.json();
             
-            return {
+            // Transform to our expected format with properly initialized structures
+            const enhancementResponse: AIEnhancementResponse = {
                 success: aiResults.success || true,
-                analysis: aiResults.analysis || {},
-                enhancements: aiResults.enhancements || {},
+                analysis: aiResults.analysis || {
+                    match_score: 0,
+                    strengths: [],
+                    gaps: [],
+                    suggestions: [],
+                    keyword_analysis: {
+                        missing_keywords: [],
+                        present_keywords: [],
+                        keyword_density_score: 0
+                    },
+                    section_recommendations: {
+                        skills: '',
+                        experience: '',
+                        education: ''
+                    }
+                },
+                enhancements: aiResults.enhancements || {
+                    enhanced_summary: '',
+                    enhanced_skills: [],
+                    enhanced_experience_bullets: [],
+                    cover_letter_outline: {
+                        opening: '',
+                        body: '',
+                        closing: ''
+                    },
+                    detailed_resume_sections: {},
+                    detailed_cover_letter: {}
+                },
                 metadata: aiResults.metadata || {
                     model_used: options.model || this.DEFAULT_MODEL,
                     model_type: options.modelType || this.DEFAULT_MODEL_TYPE,
@@ -606,6 +633,8 @@ Make sure all content is:
                 },
                 file_id: aiResults.file_id || options.fileId || `enhance_${Date.now()}`
             };
+            
+            return enhancementResponse;
 
         } catch (error: any) {
             console.error('Error in AI enhancement with JSON:', error);
