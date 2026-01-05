@@ -375,84 +375,85 @@ Make sure all content is:
 6. Creates a compelling narrative for the candidate`;
     }
 
-    // Enhanced resume analysis using OpenAI directly (like AiJobSearch-old)
+    // Enhanced resume analysis using Supabase Edge Function
     static async enhanceWithOpenAI(
         resumeText: string,
         jobDescription: string,
         options: AIEnhancementOptions = {}
     ): Promise<AIEnhancementResponse> {
         try {
-            console.log('Starting detailed OpenAI resume enhancement...');
+            console.log('Starting detailed OpenAI resume enhancement via Supabase...');
 
-            const openai = await getOpenAIInstance();
+            // Get Supabase client for authenticated requests
+            const { supabase } = await import('@/lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
 
-            const completion = await openai.chat.completions.create({
-                model: options.model || this.DEFAULT_MODEL,
-                messages: [
-                    {
-                        role: 'system',
-                        content: this.createDetailedSystemPrompt()
+            // Call Supabase Edge Function
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-enhancement`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
                     },
-                    {
-                        role: 'user',
-                        content: this.createDetailedUserPrompt(resumeText, jobDescription)
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 6000, // Increased for detailed content
-                response_format: { type: 'json_object' }
-            });
+                    body: JSON.stringify({
+                        resume_text: resumeText,
+                        job_description: jobDescription,
+                        model: options.model || this.DEFAULT_MODEL
+                    })
+                }
+            );
 
-            const responseText = completion.choices[0]?.message?.content;
-            if (!responseText) {
-                throw new Error('No response from OpenAI');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`AI enhancement error: ${errorText}`);
             }
 
-            console.log('OpenAI detailed response received, parsing...');
-            const aiResults = JSON.parse(responseText);
+            const aiResults = await response.json();
 
             // Transform to our expected format with detailed content
             const enhancementResponse: AIEnhancementResponse = {
-                success: true,
-                analysis: {
-                    match_score: aiResults.match_score || 0,
-                    strengths: aiResults.analysis?.strengths || [],
-                    gaps: aiResults.analysis?.gaps || [],
-                    suggestions: aiResults.analysis?.suggestions || [],
+                success: aiResults.success || true,
+                analysis: aiResults.analysis || {
+                    match_score: 0,
+                    strengths: [],
+                    gaps: [],
+                    suggestions: [],
                     keyword_analysis: {
-                        missing_keywords: aiResults.analysis?.keyword_analysis?.missing_keywords || [],
-                        present_keywords: aiResults.analysis?.keyword_analysis?.present_keywords || [],
-                        keyword_density_score: aiResults.analysis?.keyword_analysis?.keyword_density_score || 0
+                        missing_keywords: [],
+                        present_keywords: [],
+                        keyword_density_score: 0
                     },
                     section_recommendations: {
-                        skills: aiResults.analysis?.section_recommendations?.skills || '',
-                        experience: aiResults.analysis?.section_recommendations?.experience || '',
-                        education: aiResults.analysis?.section_recommendations?.education || ''
+                        skills: '',
+                        experience: '',
+                        education: ''
                     }
                 },
-                enhancements: {
-                    enhanced_summary: aiResults.enhancements?.enhanced_summary || '',
-                    enhanced_skills: aiResults.enhancements?.enhanced_skills || [],
-                    enhanced_experience_bullets: aiResults.enhancements?.enhanced_experience_bullets || [],
+                enhancements: aiResults.enhancements || {
+                    enhanced_summary: '',
+                    enhanced_skills: [],
+                    enhanced_experience_bullets: [],
                     cover_letter_outline: {
-                        opening: aiResults.enhancements?.cover_letter_outline?.opening || '',
-                        body: aiResults.enhancements?.cover_letter_outline?.body || '',
-                        closing: aiResults.enhancements?.cover_letter_outline?.closing || ''
+                        opening: '',
+                        body: '',
+                        closing: ''
                     },
-                    // Add detailed content
-                    detailed_resume_sections: aiResults.enhancements?.detailed_resume_sections || {},
-                    detailed_cover_letter: aiResults.enhancements?.detailed_cover_letter || {}
+                    detailed_resume_sections: {},
+                    detailed_cover_letter: {}
                 },
-                metadata: {
+                metadata: aiResults.metadata || {
                     model_used: options.model || this.DEFAULT_MODEL,
                     model_type: options.modelType || this.DEFAULT_MODEL_TYPE,
                     timestamp: new Date().toISOString(),
-                    resume_sections_analyzed: ['summary', 'experience', 'skills', 'education', 'projects', 'certifications', 'awards', 'volunteer', 'publications']
+                    resume_sections_analyzed: ['summary', 'experience', 'skills', 'education']
                 },
-                file_id: options.fileId || `enhance_${Date.now()}`
+                file_id: aiResults.file_id || options.fileId || `enhance_${Date.now()}`
             };
 
-            console.log('OpenAI detailed enhancement completed successfully');
+            console.log('AI enhancement completed successfully via Supabase');
             return enhancementResponse;
 
         } catch (error: any) {
@@ -506,14 +507,18 @@ Make sure all content is:
         }
     }
 
-    // Enhance resume with JSON data using OpenAI directly
+    // Enhance resume with JSON data using Supabase Edge Function
     static async enhanceWithJson(
         resumeJson: any,
         jobDescription: string,
         options: AIEnhancementOptions = {}
     ): Promise<AIEnhancementResponse> {
         try {
-            // Convert JSON resume data to text format for OpenAI
+            // Get Supabase client for authenticated requests
+            const { supabase } = await import('@/lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+
+            // Convert JSON resume data to text format
             let resumeText = '';
 
             if (resumeJson.personal) {
@@ -563,8 +568,44 @@ Make sure all content is:
                 }
             }
 
-            console.log('Using JSON resume data with OpenAI directly...');
-            return await this.enhanceWithOpenAI(resumeText, jobDescription, options);
+            // Call Supabase Edge Function with JSON data
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-enhancement`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+                    },
+                    body: JSON.stringify({
+                        resume_json: resumeJson,
+                        resume_text: resumeText,
+                        job_description: jobDescription,
+                        model: options.model || this.DEFAULT_MODEL
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`AI enhancement error: ${errorText}`);
+            }
+
+            const aiResults = await response.json();
+            
+            return {
+                success: aiResults.success || true,
+                analysis: aiResults.analysis || {},
+                enhancements: aiResults.enhancements || {},
+                metadata: aiResults.metadata || {
+                    model_used: options.model || this.DEFAULT_MODEL,
+                    model_type: options.modelType || this.DEFAULT_MODEL_TYPE,
+                    timestamp: new Date().toISOString(),
+                    resume_sections_analyzed: []
+                },
+                file_id: aiResults.file_id || options.fileId || `enhance_${Date.now()}`
+            };
 
         } catch (error: any) {
             console.error('Error in AI enhancement with JSON:', error);

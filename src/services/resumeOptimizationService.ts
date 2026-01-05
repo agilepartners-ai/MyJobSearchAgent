@@ -29,9 +29,8 @@ interface OptimizationResponse {
 }
 
 export class ResumeOptimizationService {
-  private static readonly API_URL = 'https://resumebuilder-arfb.onrender.com/optimizer/api/optimize-resume/';
+  private static readonly SUPABASE_FUNCTION_URL = '/functions/v1/resume-optimization';
   private static readonly API_TIMEOUT = 30000; // 30 seconds
-  private static readonly PROXY_URL = '/api/proxy/resume-optimization'; // Local proxy endpoint
 
   /**
    * Validate optimization request data
@@ -92,24 +91,20 @@ export class ResumeOptimizationService {
       const timeoutId = setTimeout(() => controller.abort(), this.API_TIMEOUT);
 
       try {
-        // Determine which endpoint to use based on environment
-        const endpoint = process.env.NODE_ENV === 'production'
-          ? this.API_URL  // Use direct API in production (with proper CORS on server)
-          : this.PROXY_URL; // Use proxy in development
-
-        // Send request to API using our error handling utility
+        // Get Supabase client for authenticated requests
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Call Supabase Edge Function
         const response = await fetchWithErrorHandling<OptimizationResponse>(
-          endpoint,
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}${this.SUPABASE_FUNCTION_URL}`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Accept': '*/*',
-              // Add origin for CORS preflight requests
-              'Origin': window.location.origin
+              'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
             },
-            // Include credentials if needed (for cookies/auth)
-            // credentials: 'include',
             body: JSON.stringify(requestData),
             signal: controller.signal
           },
@@ -127,7 +122,7 @@ export class ResumeOptimizationService {
         if (!(error as any).endpoint) {
           throw createApiError(
             error instanceof Error ? error.message : String(error),
-            this.API_URL,
+            this.SUPABASE_FUNCTION_URL,
             requestData
           );
         }
@@ -235,7 +230,7 @@ export class ResumeOptimizationService {
     // Otherwise, throw an error
     throw createApiError(
       apiResponse.error || 'API response does not contain valid data for detailed resume generation',
-      this.API_URL,
+      this.SUPABASE_FUNCTION_URL,
       { success: apiResponse.success, message: apiResponse.message }
     );
   }

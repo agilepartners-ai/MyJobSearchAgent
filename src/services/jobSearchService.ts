@@ -38,45 +38,33 @@ export interface JobSearchResponse {
 }
 
 export class JobSearchService {
-    private static readonly JSEARCH_API_KEY = process.env.NEXT_PUBLIC_JSEARCH_API_KEY;
-  private static readonly JSEARCH_API_HOST = process.env.NEXT_PUBLIC_JSEARCH_API_HOST || 'jsearch.p.rapidapi.com';
-  private static readonly JSEARCH_BASE_URL = 'https://jsearch.p.rapidapi.com/search';
+  private static readonly SUPABASE_FUNCTION_URL = '/functions/v1/job-search';
+  
   static async searchJobs(params: JobSearchParams): Promise<JobSearchResponse> {
     try {
-      // Check if API key is configured
-      if (!this.JSEARCH_API_KEY) {
-        throw new Error('JSEARCH_API_KEY is not configured. Please add it to your .env file.');
-      }
 
-      // Use only state for location if possible
-      const state = params.location.includes(',') 
-        ? params.location.split(',').pop()?.trim() 
-        : params.location;
-      
-      let query = `${params.jobProfile} jobs in ${state}`;
-      
-      // Add experience level to query
-      if (params.experience.toLowerCase() === 'experienced') {
-        query += ' senior';
-      } else if (params.experience.toLowerCase() === 'fresher') {
-        query += ' entry level';
-      }
+      // Get Supabase client for authenticated requests
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
 
-      const searchParams = new URLSearchParams({
-        query: query,
-        page: '1',
-        num_pages: (params.numPages || 1).toString(),
-        country: 'us',
-        date_posted: 'all'
-      });
-
-      const response = await fetch(`${this.JSEARCH_BASE_URL}?${searchParams.toString()}`, {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Host': this.JSEARCH_API_HOST,
-          'X-RapidAPI-Key': this.JSEARCH_API_KEY
+      // Call Supabase Edge Function
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}${this.SUPABASE_FUNCTION_URL}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+          },
+          body: JSON.stringify({
+            jobProfile: params.jobProfile,
+            experience: params.experience,
+            location: params.location,
+            numPages: params.numPages || 1
+          })
         }
-      });
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -86,7 +74,13 @@ export class JobSearchService {
 
       const data = await response.json();
       
-      if (!data.data || !Array.isArray(data.data)) {
+      // Handle response from Supabase function (already formatted)
+      if (data.success && Array.isArray(data.jobs)) {
+        return data;
+      }
+
+      // Fallback for old format
+      if (!data.jobs || !Array.isArray(data.jobs)) {
         console.warn('No jobs data found in response:', data);
         return {
           message: 'No jobs found',
@@ -98,58 +92,9 @@ export class JobSearchService {
           },
           success: true
         };
-      }      const jobs: JobResult[] = data.data.map((jobData: any, index: number) => {
-        if (index < 3) {
-          console.log(`Sample job data ${index + 1}:`, jobData);
-        }
-        
-        const city = jobData.job_city || '';
-        const jobState = jobData.job_state || '';
-        const country = jobData.job_country || '';
-        const locationStr = [city, jobState, country].filter(Boolean).join(', ') || 
-                           jobData.job_location || 
-                           jobData.employer_location || 
-                           'N/A';
+      }
 
-        const mappedJob = {
-          job_title: jobData.job_title || 'N/A',
-          employer_name: jobData.employer_name || 'N/A',
-          job_city: jobData.job_city || '',
-          job_state: jobData.job_state || '',
-          job_country: jobData.job_country || '',
-          job_is_remote: jobData.job_is_remote || false,
-          job_apply_link: jobData.job_apply_link || jobData.job_url || '',
-          job_employment_type: jobData.job_employment_type || 'N/A',
-          job_posted_at_datetime_utc: jobData.job_posted_at_datetime_utc || '',
-          job_salary_currency: jobData.job_salary_currency || '',
-          job_min_salary: jobData.job_min_salary || undefined,
-          job_max_salary: jobData.job_max_salary || undefined,
-          job_salary_period: jobData.job_salary_period || '',
-          job_experience_in_place_of_education: jobData.job_experience_in_place_of_education || false,
-          job_description: jobData.job_description || 'No description available',
-          job_url: jobData.job_url || jobData.job_apply_link || '',
-          location: locationStr
-        };
-
-        if (index < 3) {
-          console.log(`Mapped job ${index + 1}:`, mappedJob);
-        }
-
-        return mappedJob;
-      }).filter((job: JobResult) => job.job_title !== 'N/A' && job.employer_name !== 'N/A');
-
-      console.log(`Successfully mapped ${jobs.length} jobs from ${data.data.length} raw results`);
-
-      return {
-        message: `Found ${jobs.length} jobs for ${params.jobProfile} in ${params.location}`,
-        jobs,
-        search_criteria: {
-          job_profile: params.jobProfile,
-          experience: params.experience,
-          location: params.location
-        },
-        success: true
-      };
+      return data;
 
     } catch (error) {
       console.error('Error searching jobs:', error);

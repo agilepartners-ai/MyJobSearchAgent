@@ -51,8 +51,7 @@ export interface GenerateCoverLetterRequest {
 }
 
 export class PDFGenerationService {
-    private static readonly API_BASE_URL = process.env.NEXT_PUBLIC_RESUME_API_BASE_URL || 'https://resumebuilder-arfb.onrender.com';
-    private static readonly API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    private static readonly SUPABASE_FUNCTION_URL = '/functions/v1/pdf-generation';
     private static readonly DEFAULT_MODEL_TYPE = process.env.NEXT_PUBLIC_RESUME_API_MODEL_TYPE || 'OpenAI';
     private static readonly DEFAULT_MODEL = process.env.NEXT_PUBLIC_RESUME_API_MODEL || 'gpt-4o';
 
@@ -73,22 +72,9 @@ export class PDFGenerationService {
         jobDescription: string,
         options: OptimizeResumeOptions = {}
     ): Promise<Blob> {
-        const endpoint = `${this.API_BASE_URL}/api/optimize-resume`;
+        const endpoint = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${this.SUPABASE_FUNCTION_URL}`;
         
         try {
-            // Validate API key
-            console.log(' [DEBUG] PDFGenerationService - API_KEY value:', this.API_KEY ? `${this.API_KEY.substring(0, 20)}...` : 'NOT FOUND');
-            console.log(' [DEBUG] PDFGenerationService - API_KEY length:', this.API_KEY ? this.API_KEY.length : 0);
-            if (!this.API_KEY) {
-                throw createApiError(
-                    endpoint,
-                    'POST',
-                    { fileId, hasJobDescription: !!jobDescription, options },
-                    null,
-                    'OpenAI API key is not configured or invalid. Please check your environment variables.'
-                );
-            }
-
             // Validate inputs
             if (!fileId || !jobDescription.trim()) {
                 throw createApiError(
@@ -112,18 +98,21 @@ export class PDFGenerationService {
                 );
             }
 
-            const requestData: OptimizeResumeRequest = {
+            // Get Supabase client for authenticated requests
+            const { supabase } = await import('@/lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const requestData = {
                 file_id: fileId,
                 job_description: jobDescription,
                 template: template,
-                api_key: this.API_KEY,
                 model_type: options.modelType || this.DEFAULT_MODEL_TYPE,
                 model: options.model || this.DEFAULT_MODEL,
                 section_ordering: options.sectionOrdering || ['education', 'work', 'skills'],
-                improve_resume: options.improveResume !== false // Default to true
+                improve_resume: options.improveResume !== false
             };
 
-            console.log('Making optimize resume request to:', endpoint);
+            console.log('Making optimize resume request to Supabase function:', endpoint);
             console.log('Using template:', requestData.template);
             console.log('File ID:', fileId);
 
@@ -131,7 +120,8 @@ export class PDFGenerationService {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'
+                    'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                    'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
                 },
                 body: JSON.stringify(requestData),
                 // 3 minutes timeout for PDF generation

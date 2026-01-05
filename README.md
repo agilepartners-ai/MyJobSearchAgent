@@ -73,9 +73,11 @@ NEXT_PUBLIC_AUTH_PROVIDER=supabase
 # NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<get-from-supabase-status>
 
-# Other API Keys
-NEXT_PUBLIC_JSEARCH_API_KEY=Your jsearch api
-NEXT_PUBLIC_JSEARCH_API_HOST=your host api
+# Supabase Edge Functions Secrets (set in Supabase dashboard)
+# These are configured as secrets in Supabase, not in .env.local:
+# - OPENAI_API_KEY (for AI enhancement and resume optimization)
+# - JSEARCH_API_KEY (for job search)
+# - JSEARCH_API_HOST (for job search)
 ```
 
 #### Local Supabase Setup
