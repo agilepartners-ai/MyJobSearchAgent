@@ -82,21 +82,20 @@ export class AuthService {
       const config = getAuthConfig();
       
       switch (config.provider) {
-        case 'firebase':
-          const { FirebaseAuthProvider } = await import('./auth/FirebaseAuthProvider');
-          this.setProvider(new FirebaseAuthProvider());
+        case 'supabase':
+          const { SupabaseAuthProvider } = await import('./auth/SupabaseAuthProvider');
+          this.setProvider(new SupabaseAuthProvider());
           break;
         case 'auth0':
           // TODO: Implement Auth0 provider
           throw new Error('Auth0 provider not implemented yet');
-        case 'supabase':
-          // TODO: Implement Supabase provider
-          throw new Error('Supabase provider not implemented yet');
         case 'custom':
           // TODO: Implement custom provider
           throw new Error('Custom provider not implemented yet');
         default:
-          throw new Error(`Unknown auth provider: ${config.provider}`);
+          // Default to Supabase
+          const { SupabaseAuthProvider: DefaultSupabaseAuthProvider } = await import('./auth/SupabaseAuthProvider');
+          this.setProvider(new DefaultSupabaseAuthProvider());
       }
     } catch (error) {
       console.error('Failed to initialize auth provider:', error);

@@ -1,4 +1,4 @@
-import { FirebaseDBService } from './firebaseDBService';
+import { SupabaseDBService } from './supabaseDBService';
 
 export interface JobPreferences {
   id: string;
@@ -11,26 +11,26 @@ export interface JobPreferences {
   updated_at?: string;
 }
 
-export class FirebaseJobPreferencesService {
+export class SupabaseJobPreferencesService {
   private static basePath(userId: string) {
-  return `jobPreferences/${userId}`;
-}
-
+    return `jobPreferences/${userId}`;
+  }
 
   static async getUserJobPreferences(userId: string): Promise<JobPreferences | null> {
-    return FirebaseDBService.read<JobPreferences>(this.basePath(userId));
+    return SupabaseDBService.read<JobPreferences>(this.basePath(userId));
   }
 
   static async saveJobPreferences(userId: string, preferences: Omit<JobPreferences, 'id' | 'updated_at'>): Promise<void> {
     const fullPreferences = {
       ...preferences,
+      id: userId,
       updated_at: new Date().toISOString(),
     };
-    return FirebaseDBService.set(this.basePath(userId), fullPreferences);
+    return SupabaseDBService.set(this.basePath(userId), fullPreferences);
   }
 
   static async deleteJobPreferences(userId: string): Promise<void> {
-    return FirebaseDBService.delete(this.basePath(userId));
+    return SupabaseDBService.delete(this.basePath(userId));
   }
 }
 

@@ -1,11 +1,11 @@
 /**
  * Job ID Mapping Service
- * Maps temporary local job IDs to actual Firebase document IDs
+ * Maps temporary local job IDs to actual Supabase document IDs
  */
 
 export interface JobIdMapping {
   localId: string;
-  firebaseId: string;
+  databaseId: string;
   userId: string;
   jobTitle: string;
   companyName: string;
@@ -16,15 +16,15 @@ export class JobIdMappingService {
   private static MAPPING_KEY = 'job_id_mappings';
 
   /**
-   * Add a mapping between local ID and Firebase ID
+   * Add a mapping between local ID and Supabase database ID
    */
-  static addMapping(localId: string, firebaseId: string, userId: string, jobTitle: string, companyName: string): void {
+  static addMapping(localId: string, databaseId: string, userId: string, jobTitle: string, companyName: string): void {
     try {
       const mappings = this.getAllMappings();
       
       const newMapping: JobIdMapping = {
         localId,
-        firebaseId,
+        databaseId,
         userId,
         jobTitle,
         companyName,
@@ -42,31 +42,31 @@ export class JobIdMappingService {
       
       localStorage.setItem(this.MAPPING_KEY, JSON.stringify(trimmedMappings));
       
-      console.log(`JobIdMappingService: Added mapping ${localId} -> ${firebaseId}`);
+      console.log(`JobIdMappingService: Added mapping ${localId} -> ${databaseId}`);
     } catch (error) {
     }
   }
 
   /**
-   * Get Firebase ID from local ID
+   * Get database ID from local ID
    */
-  static getFirebaseId(localId: string): string | null {
+  static getDatabaseId(localId: string): string | null {
     try {
       const mappings = this.getAllMappings();
       const mapping = mappings.find(m => m.localId === localId);
-      return mapping ? mapping.firebaseId : null;
+      return mapping ? mapping.databaseId : null;
     } catch (error) {
       return null;
     }
   }
 
   /**
-   * Get local ID from Firebase ID
+   * Get local ID from database ID
    */
-  static getLocalId(firebaseId: string): string | null {
+  static getLocalId(databaseId: string): string | null {
     try {
       const mappings = this.getAllMappings();
-      const mapping = mappings.find(m => m.firebaseId === firebaseId);
+      const mapping = mappings.find(m => m.databaseId === databaseId);
       return mapping ? mapping.localId : null;
     } catch (error) {
       return null;
@@ -102,7 +102,7 @@ export class JobIdMappingService {
    * Check if a local ID has been mapped
    */
   static isMapped(localId: string): boolean {
-    return this.getFirebaseId(localId) !== null;
+    return this.getDatabaseId(localId) !== null;
   }
 
   /**

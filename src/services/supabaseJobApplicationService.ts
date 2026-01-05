@@ -1,4 +1,4 @@
-import { FirebaseDBService } from './firebaseDBService';
+import { SupabaseDBService } from './supabaseDBService';
 
 // Assuming these interfaces are defined in a shared types file
 export interface JobApplication {
@@ -38,17 +38,17 @@ export interface ApplicationStats {
   applied: number;
 }
 
-export class FirebaseJobApplicationService {
+export class SupabaseJobApplicationService {
   private static basePath(userId: string) {
     return `users/${userId}/jobApplications`;
   }
 
   static async getUserApplications(userId: string): Promise<JobApplication[]> {
-    return FirebaseDBService.getList<JobApplication>(this.basePath(userId));
+    return SupabaseDBService.getList<JobApplication>(this.basePath(userId));
   }
 
   static async getApplication(userId: string, applicationId: string): Promise<JobApplication | null> {
-    return FirebaseDBService.read<JobApplication>(`${this.basePath(userId)}/${applicationId}`);
+    return SupabaseDBService.read<JobApplication>(`${this.basePath(userId)}/${applicationId}`);
   }
 
   static async addApplication(userId: string, applicationData: Omit<JobApplication, 'id' | 'created_at' | 'user_id' | 'last_updated' | 'updated_at'>): Promise<string> {
@@ -76,7 +76,7 @@ export class FirebaseJobApplicationService {
       priority: applicationData.priority || 1,
       source: applicationData.source || null,
     };
-    return FirebaseDBService.create(this.basePath(userId), fullApplicationData);
+    return SupabaseDBService.create(this.basePath(userId), fullApplicationData);
   }
 
   static async updateApplication(userId: string, applicationId: string, updates: Partial<JobApplication>): Promise<void> {
@@ -85,11 +85,11 @@ export class FirebaseJobApplicationService {
         last_updated: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-    return FirebaseDBService.update(`${this.basePath(userId)}/${applicationId}`, updateData);
+    return SupabaseDBService.update(`${this.basePath(userId)}/${applicationId}`, updateData);
   }
 
   static async deleteApplication(userId: string, applicationId: string): Promise<void> {
-    return FirebaseDBService.delete(`${this.basePath(userId)}/${applicationId}`);
+    return SupabaseDBService.delete(`${this.basePath(userId)}/${applicationId}`);
   }
 
   static async getApplicationStats(userId: string): Promise<ApplicationStats> {
@@ -127,3 +127,4 @@ export class FirebaseJobApplicationService {
     return stats;
   }
 }
+

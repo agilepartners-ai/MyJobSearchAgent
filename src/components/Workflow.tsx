@@ -49,11 +49,6 @@ const Workflow: React.FC = () => {
       title: "Track Progress",
       description: "Monitor and keep track of all your applications in one dashboard with real-time status updates."
     },
-    {
-      imageSrc: "/Step_5_MockInterview_AI.png",
-      title: "Interview Prep",
-      description: "Practice with AI-powered mock interviews tailored to the specific job and company."
-    }
   ];
 
   return (

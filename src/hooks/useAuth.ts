@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AuthService, AuthUser } from '../services/authService';
-import { FirebaseProfileService, Profile } from '../services/firebaseProfileService';
+import { SupabaseProfileService, Profile } from '../services/supabaseProfileService';
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -16,7 +16,7 @@ export const useAuth = () => {
         
         if (currentUser) {
           try {
-            const profile = await FirebaseProfileService.getOrCreateProfile(
+            const profile = await SupabaseProfileService.getOrCreateProfile(
               currentUser.id, 
               currentUser.email || '', 
               currentUser.displayName || ''
@@ -43,7 +43,7 @@ export const useAuth = () => {
       
       if (user) {
         try {
-          const profile = await FirebaseProfileService.getOrCreateProfile(
+          const profile = await SupabaseProfileService.getOrCreateProfile(
             user.id, 
             user.email || '', 
             user.displayName || ''

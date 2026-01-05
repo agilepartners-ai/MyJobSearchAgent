@@ -25,8 +25,10 @@ export class EmailService {
     const config = getEmailConfig();
     
     switch (config.provider) {
-      case 'firebase':
-        this.setProvider(new FirebaseEmailProvider());
+      case 'supabase':
+        // Supabase Auth handles password reset emails automatically
+        // For custom emails, use console provider or implement Supabase Edge Functions
+        this.setProvider(new SupabaseEmailProvider());
         break;
       case 'console':
         this.setProvider(new ConsoleEmailProvider());
@@ -106,31 +108,29 @@ export class ConsoleEmailProvider implements EmailProvider {
   }
 }
 
-// Firebase email provider using Firebase Auth's email capabilities
-export class FirebaseEmailProvider implements EmailProvider {
+// Supabase email provider - Supabase Auth handles password reset emails automatically
+// For custom emails, you can use Supabase Edge Functions with email services like SendGrid, Resend, etc.
+export class SupabaseEmailProvider implements EmailProvider {
   async sendEmail(template: EmailTemplate): Promise<boolean> {
     try {
-      // For now, we'll use Firebase's built-in password reset email
-      // In the future, this could be extended with Firebase Functions + email service
-      
-      // Since Firebase Auth only sends password reset emails to existing users,
-      // we'll simulate the email sending for development
-      console.log('=== FIREBASE EMAIL SERVICE ===');
+      // Supabase Auth handles password reset emails automatically via sendPasswordResetEmail
+      // For custom emails, implement Supabase Edge Functions or use external email service
+      console.log('=== SUPABASE EMAIL SERVICE ===');
       console.log('To:', template.to);
       console.log('Subject:', template.subject);
       console.log('Content:', template.text);
       console.log('HTML:', template.html);
       console.log('==============================');
       
-      // TODO: Implement Firebase Functions email sending
+      // TODO: Implement Supabase Edge Functions for custom email sending
       // This would involve:
-      // 1. Creating a Firebase Function
-      // 2. Using a service like SendGrid, Mailgun, or Nodemailer
+      // 1. Creating a Supabase Edge Function
+      // 2. Using a service like SendGrid, Resend, or Nodemailer
       // 3. Calling the function from here
       
       return true; // Return true for development
     } catch (error) {
-      console.error('Firebase email sending failed:', error);
+      console.error('Supabase email sending failed:', error);
       return false;
     }
   }

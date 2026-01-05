@@ -54,14 +54,6 @@ const Testimonials: React.FC = () => {
       image: "https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     {
-      content: "The mock interview practice was a game-changer. I was terrified of interviews, but the AI coaching helped me build confidence and perfect my answers. I aced every interview after that!",
-      name: "Michael Chen",
-      role: "Product Manager",
-      company: "Microsoft",
-      previousRole: "Business Analyst",
-      image: "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-    },
-    {
       content: "The job dashboard helped me discover opportunities I never would have found on my own. The personalized recommendations were incredibly accurate and saved me hours of searching.",
       name: "Dr. Emily Rodriguez",
       role: "Data Scientist",

@@ -1,4 +1,4 @@
-import { FirebaseDBService } from './firebaseDBService';
+import { SupabaseDBService } from './supabaseDBService';
 
 export interface JobPreferences {
   id: string;
@@ -20,7 +20,7 @@ export class JobPreferencesService {
   }
 
   static async getJobPreferences(userId: string): Promise<JobPreferences | null> {
-    const doc = await FirebaseDBService.read<JobPreferences>(this.documentPath(userId));
+    const doc = await SupabaseDBService.read<JobPreferences>(this.documentPath(userId));
     // Attach the ID since it's not stored in the document data
     return doc ? { ...doc, id: 'default' } : null;
   }
@@ -31,12 +31,12 @@ export class JobPreferencesService {
       user_id: userId,
     };
     // Use 'set' to create or overwrite the single preferences document
-    await FirebaseDBService.set(this.documentPath(userId), fullPreferences);
+    await SupabaseDBService.set(this.documentPath(userId), fullPreferences);
     return 'default';
   }
 
   static async updateJobPreferences(userId: string, updates: Partial<JobPreferences>): Promise<void> {
     // 'update' requires a document path, which is now correctly provided
-    return FirebaseDBService.update(this.documentPath(userId), updates);
+    return SupabaseDBService.update(this.documentPath(userId), updates);
   }
 }

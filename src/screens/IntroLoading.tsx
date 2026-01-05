@@ -1,47 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { healthCheckApi, getConversation } from "@/api";
+import { healthCheckApi } from "@/api";
 import { screenAtom } from "@/store/screens";
-import { conversationAtom } from "@/store/conversation";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { quantum } from 'ldrs';
-import { getConversationIdFromUrl, isDirectConversationAccess } from "@/utils/urlUtils";
-import { apiTokenAtom } from "@/store/tokens";
 
 const screens = {
   error: "outage",
   success: "intro",
   outOfTime: "outOfMinutes",
-  conversation: "conversation",
 } as const;
 
 const useHealthCheck = () => {
   const [screenState, setScreenState] = useState<keyof typeof screens | null>(
     null,
   );
-  const [, setConversation] = useAtom(conversationAtom);
-  const token = useAtomValue(apiTokenAtom);
 
   const healthCheck = async (): Promise<void> => {
     try {
       const response = await healthCheckApi();
       if (response?.status) {
-        // Check if there's a conversation_id in the URL
-        const conversationId = getConversationIdFromUrl();
-        
-        if (conversationId && token) {
-          try {
-            // Try to fetch the conversation
-            const conversation = await getConversation(token, conversationId);
-            setConversation(conversation);
-            setScreenState("conversation");
-          } catch (error) {
-            console.error("Failed to load conversation:", error);
-            // If conversation fetch fails, go to normal intro
-            setScreenState("success");
-          }
-        } else {
-          setScreenState("success");
-        }
+        setScreenState("success");
       } else {
         setScreenState("error");
       }

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { useDailyEvent } from "@daily-co/daily-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useAtom } from "jotai";
 import { cn } from "@/utils";
 import nice from "@/assets/sounds/nice.mp3";
@@ -149,76 +148,10 @@ const Typewriter = ({
 };
 
 export const Game: React.FC = memo(() => {
-  const [niceScore, setNiceScore] = useAtom(niceScoreAtom);
-  const [naughtyScore, setNaughtyScore] = useAtom(naughtyScoreAtom);
-  const [showNice, setShowNice] = useState(false);
-  const [showNaughty, setShowNaughty] = useState(false);
-  const audioNice = useMemo(() => {
-    const audioObj = new Audio(nice);
-    audioObj.volume = 0.7;
-    return audioObj;
-  }, []);
-  const audioNaughty = useMemo(() => {
-    const audioObj = new Audio(naughty);
-    audioObj.volume = 0.7;
-    return audioObj;
-  }, []);
-
-  const getScorePoint = (score: number) => {
-    if (score > 0.75) return 0.75;
-    if (score > 0.5) return 0.5;
-    if (score > 0.25) return 0.25;
-    if (score > 0) return 0.1;
-    if (score === 0) return 0;
-    if (score < -0.75) return -0.75;
-    if (score < -0.5) return -0.5;
-    if (score < -0.25) return -0.25;
-    if (score < 0) return -0.1;
-    return 0;
-  };
-
-  useDailyEvent(
-    "app-message",
-    useCallback(
-      (ev: {
-        data?: {
-          event_type: string;
-          properties?: { arguments?: { score?: number } };
-        };
-      }) => {
-        if (ev.data?.event_type === "conversation.tool_call") {
-          const score = ev.data?.properties?.arguments?.score ?? 0;
-          const scorePoint = getScorePoint(score);
-          console.log({ score, scorePoint });
-
-          if (score > 0) {
-            if (scorePoint > niceScore) {
-              setShowNice(true);
-              setTimeout(() => {
-                setShowNice(false);
-              }, 2000);
-              audioNice.play().catch((error) => {
-                console.warn("Audio playback failed:", error);
-              });
-              setNiceScore(scorePoint);
-            }
-          } else if (score < 0) {
-            if (scorePoint !== naughtyScore) {
-              setShowNaughty(true);
-              audioNaughty.play().catch((error) => {
-                console.warn("Audio playback failed:", error);
-              });
-              setTimeout(() => {
-                setShowNaughty(false);
-              }, 2000);
-              setNaughtyScore(scorePoint);
-            }
-          }
-        }
-      },
-      [niceScore, naughtyScore],
-    ),
-  );
+  const [niceScore] = useAtom(niceScoreAtom);
+  const [naughtyScore] = useAtom(naughtyScoreAtom);
+  const [showNice] = useState(false);
+  const [showNaughty] = useState(false);
 
   return (
     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center border border-white/20 bg-black/80 p-4 pt-3">

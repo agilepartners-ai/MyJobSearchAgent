@@ -44,19 +44,6 @@ const Services: React.FC = () => {
       ]
     },
     {
-      icon: <MessageCircle size={32} />,
-      title: "Mock Interview & Questions & Answers",
-      description: "Practice with our AI interviewer that adapts to your industry and role, providing personalized feedback and comprehensive Q&A preparation to boost your confidence.",
-      features: [
-        "Role-specific interview questions database",
-        "AI-powered mock interview sessions",
-        "Real-time performance analysis",
-        "Body language and speech coaching",
-        "Behavioral interview preparation",
-        "Technical interview practice"
-      ]
-    },
-    {
       icon: <Briefcase size={32} />,
       title: "Job Dashboard with Job Description & Role",
       description: "Discover and track opportunities with our intelligent job matching system that provides detailed job descriptions, role insights, and company information.",

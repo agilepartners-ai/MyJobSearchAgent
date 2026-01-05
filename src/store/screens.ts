@@ -7,8 +7,6 @@ export type Screen =
   | "intro"
   | "instructions"
   | "settings"
-  | "conversation"
-  | "conversationError"
   | "positiveFeedback"
   | "negativeFeedback"
   | "finalScreen"

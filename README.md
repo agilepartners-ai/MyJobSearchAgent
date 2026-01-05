@@ -10,7 +10,7 @@ An AI-powered job search application built with NEXT_PUBLIC.js, React, and TypeS
 - **Resume Optimization**: AI-powered resume enhancement and template selection
 - **Application Tracking**: Comprehensive dashboard to track job applications
 - **Profile Management**: User profile creation and management
-- **Authentication**: Secure login/registration with Firebase
+- **Authentication**: Secure login/registration with Supabase
 - **Responsive Design**: Modern UI built with Tailwind CSS
 - **Real-time Updates**: Live application status tracking
 
@@ -19,7 +19,8 @@ An AI-powered job search application built with NEXT_PUBLIC.js, React, and TypeS
 - **Frontend**: React 18 + TypeScript
 - **Framework**: NEXT_PUBLIC.js
 - **Styling**: Tailwind CSS
-- **Authentication**: Firebase
+- **Authentication**: Supabase
+- **Database**: Supabase PostgreSQL
 - **Routing**: React Router DOM
 - **Icons**: Lucide React
 - **Date Handling**: date-fns
@@ -30,10 +31,10 @@ An AI-powered job search application built with NEXT_PUBLIC.js, React, and TypeS
 
 Before running this project, make sure you have:
 
-- **Node.js** (version 18 or higher)
+- **Node.js** (version 24 or higher)
 - **npm** or **yarn** package manager
 - **Git** for version control
-- **Firebase account** (for authentication)
+- **Supabase account** (for authentication and database) or Docker (for local development)
 
 ## ⚡ Quick Start
 
@@ -58,18 +59,45 @@ npm install
 
 ### 3. Environment Setup
 
-Create a `.env` file in the root directory and add your Firebase configuration:
+Create a `.env.local` file in the root directory and add your Supabase configuration:
 
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_AUTH_PROVIDER=supabase
+
+# For local development, first start Supabase:
+# supabase start
+# Then use the credentials from: supabase status
+# NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=<get-from-supabase-status>
+
+# Other API Keys
 NEXT_PUBLIC_JSEARCH_API_KEY=Your jsearch api
 NEXT_PUBLIC_JSEARCH_API_HOST=your host api
 ```
+
+#### Local Supabase Setup
+
+For local development, use the Supabase CLI:
+
+```bash
+# Install Supabase CLI (if not already installed)
+# macOS: brew install supabase/tap/supabase
+# Linux: npm install -g supabase
+# Windows: npm install -g supabase
+
+# Start Supabase locally
+supabase start
+
+# Get connection details
+supabase status
+
+# Access Supabase Studio at http://localhost:54323
+```
+
+See `SUPABASE_SETUP.md` for detailed local setup instructions.
 
 ### 4. Run Development Server
 
@@ -366,13 +394,10 @@ The project is configured for automatic deployment to Netlify:
    - Build command: `npm run build`
    - Publish directory: `dist`
    - Node version: 18
-3. **Environment Variables**: Add your Firebase config to Netlify environment variables:
-   - `NEXT_PUBLIC_FIREBASE_API_KEY`
-   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-   - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-   - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-   - `NEXT_PUBLIC_FIREBASE_APP_ID`
+3. **Environment Variables**: Add your Supabase config to Netlify environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_AUTH_PROVIDER` (set to `supabase`)
    - `NEXT_PUBLIC_JSEARCH_API_KEY`
    - `NEXT_PUBLIC_JSEARCH_API_HOST`
 
@@ -421,7 +446,7 @@ npm run build -- --analyze
 ## 🔒 Security
 
 - **Environment Variables**: All sensitive data in `.env`
-- **Firebase Security Rules**: Configured for user data protection
+- **Supabase Row Level Security (RLS)**: Configured for user data protection
 - **HTTPS**: Enforced in production
 - **Content Security Policy**: Configured in Netlify
 - **Input Validation**: Zod schema validation

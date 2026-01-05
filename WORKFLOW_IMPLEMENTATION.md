@@ -55,7 +55,6 @@ All authentication endpoints now redirect to `/job-search` instead of `/dashboar
    - Integrates with existing job data structures
 
 ### Enhanced Features:
-- **AI Interview Integration**: Enhanced with Tavus API for realistic mock interviews
 - **Resume Optimization**: Improved AI-powered resume customization
 - **Error Handling**: Comprehensive error boundaries and user feedback
 - **CORS Support**: Full CORS configuration for production deployment

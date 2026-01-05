@@ -15,7 +15,7 @@ export const FinalScreen: React.FC = () => {
     <DialogWrapper>
       <AnimatedTextBlockWrapper>
         <div className="flex flex-col items-center justify-center gap-6 py-12">
-          <h1 className="text-3xl font-bold text-white mb-4 text-center">Thank you for your conversation!</h1>
+          <h1 className="text-3xl font-bold text-white mb-4 text-center">Thank you!</h1>
           <Button
             onClick={handleReturn}
             className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-8 py-3 text-base text-white transition-all duration-200 hover:text-primary disabled:opacity-50"

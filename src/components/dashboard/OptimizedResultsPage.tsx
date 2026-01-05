@@ -13,7 +13,7 @@ interface OptimizedResultsPageProps {
     optimizedResumeUrl: string;
     optimizedCoverLetterUrl: string;
     djangoUserId: number;
-    firebaseUid: string;
+    userId: string;
     optimizationSuccessful: boolean;
     explanation?: string;
     keywordAnalysis?: {

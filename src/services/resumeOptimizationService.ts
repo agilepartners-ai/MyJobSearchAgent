@@ -1,7 +1,7 @@
 import { fetchWithErrorHandling, createApiError } from '../utils/apiErrorUtils';
 
 interface OptimizationRequest {
-  firebase_uid: string;
+  user_id: string;
   resume_text: string;
   job_description: string;
 }
@@ -11,7 +11,7 @@ interface OptimizationResponse {
   message: string;
   data?: {
     django_user_id: number;
-    firebase_uid: string;
+    user_id: string;
     user_created: boolean;
     analysis: {
       match_score: number;
@@ -82,7 +82,7 @@ export class ResumeOptimizationService {
 
       // Prepare request data
       const requestData: OptimizationRequest = {
-        firebase_uid: userId,
+        user_id: userId,
         resume_text: resumeText,
         job_description: jobDescription.replace(/[\n\s]+/g, ' ')
       };
@@ -165,7 +165,7 @@ export class ResumeOptimizationService {
 
         // Include the new fields from the updated interface
         djangoUserId: data.django_user_id,
-        firebaseUid: data.firebase_uid,
+        userId: data.user_id,
         optimizationSuccessful: data.optimization_successful,
         explanation: data.explanation || 'Resume has been comprehensively analyzed and enhanced with detailed sections including professional summary, technical skills, core competencies, detailed work experience with quantified achievements, education with relevant coursework, key projects with technologies and results, certifications, awards, volunteer experience, and publications where applicable.',
 
