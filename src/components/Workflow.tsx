@@ -94,7 +94,7 @@ const Workflow: React.FC = () => {
       imageSrc: "/Step_4_KeepTrack_AI.png",
       title: "AI Message & Reply",
       description: "AI automatically writes professional messages and replies to employers on your behalf, saving you time and ensuring timely responses.",
-      isLocal: true
+      isLocal: false
     },
     {
       imageSrc: "/Step_4_KeepTrack_AI.png",
