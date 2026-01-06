@@ -80,6 +80,24 @@ const Workflow: React.FC = () => {
     },
     {
       imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "Read Emails & Auto-Update",
+      description: "AI reads your emails to automatically update you on upcoming interviews and OA assignments, keeping you informed in real-time.",
+      isLocal: true
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "Schedule Meetups",
+      description: "Connect your calendar and let AI schedule Coffee Chats and Interviews (Technical/Behavioral) by finding the best times for you.",
+      isLocal: false
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "AI Message & Reply",
+      description: "AI automatically writes professional messages and replies to employers on your behalf, saving you time and ensuring timely responses.",
+      isLocal: true
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
       title: "Track Progress",
       description: "Monitor and keep track of all your applications in one dashboard with real-time status updates.",
       isLocal: false
@@ -116,7 +134,7 @@ const Workflow: React.FC = () => {
         <div className="relative max-w-6xl mx-auto">
           {/* Workflow steps */}
           <div className="px-2 sm:px-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-6 lg:gap-8 mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-6 lg:gap-8 mb-20">
               {workflowSteps.map((step, index) => (
                 <WorkflowStep
                   key={index}

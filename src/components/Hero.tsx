@@ -78,7 +78,7 @@ const Hero: React.FC = () => {
               </span>
             </h1>
             <p className="text-lg lg:text-xl text-gray-100 dark:text-gray-200 mb-6 leading-relaxed max-w-xl lg:max-w-none mx-auto lg:mx-0 drop-shadow-lg font-medium opacity-0 animate-fadeIn" style={{ animationDelay: '3s', animationFillMode: 'forwards' }}>
-              Transform your job search with our intelligent platform. Our online database tracks your application status and learns about you to provide personalized recommendations. Meanwhile, AI automatically parses Workday job postings and fills out applications—all running securely on your local machine.
+              Transform your job search with our intelligent platform. Our service reads your emails to automatically update you on upcoming interviews and OA assignments. Our online database tracks your application status and learns about you to provide personalized recommendations. Meanwhile, AI automatically parses Workday job postings, fills out applications, writes messages, and replies to employers—all running securely on your local machine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 lg:justify-start justify-center items-center lg:items-start opacity-0 animate-fadeIn" style={{ animationDelay: '3.5s', animationFillMode: 'forwards' }}>
               <Link 

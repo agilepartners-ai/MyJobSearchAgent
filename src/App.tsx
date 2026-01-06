@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Workflow from './components/Workflow';
-import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import LoginForm from './components/auth/LoginForm';
@@ -32,7 +31,6 @@ function App() {
           <main>
             <Hero />
             <Workflow />
-            <Testimonials />
             <Contact />
           </main>
           <Footer />
