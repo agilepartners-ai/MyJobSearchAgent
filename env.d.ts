@@ -2,7 +2,6 @@ declare namespace NodeJS {
   interface ProcessEnv {
     NEXT_PUBLIC_SUPABASE_URL: string;
     NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
-    NEXT_PUBLIC_AUTH_PROVIDER?: string;
     NEXT_PUBLIC_JSEARCH_API_KEY: string;
     NEXT_PUBLIC_JSEARCH_API_HOST: string;
     NEXT_PUBLIC_RESUME_API_BASE_URL: string;

@@ -1,0 +1,33 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# TypeScript files
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+
+# JavaScript files (only for config files)
+*.js linguist-detectable=true
+tailwind.config.js linguist-language=JavaScript
+postcss.config.js linguist-language=JavaScript
+next.config.js linguist-language=JavaScript
+next.config.mjs linguist-language=JavaScript
+
+# Exclude build outputs from language stats
+out/** linguist-vendored=true
+.next/** linguist-vendored=true
+node_modules/** linguist-vendored=true
+dist/** linguist-vendored=true
+build/** linguist-vendored=true
+
+# Markdown and documentation
+*.md linguist-detectable=true
+
+# JSON config files
+*.json linguist-detectable=true
+
+# CSS and styling
+*.css linguist-detectable=true
+
+# SQL files
+*.sql linguist-detectable=true
+

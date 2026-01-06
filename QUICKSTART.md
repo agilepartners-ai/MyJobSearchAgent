@@ -44,7 +44,6 @@
    ```env
    NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<paste-anon-key-from-status>
-   NEXT_PUBLIC_AUTH_PROVIDER=supabase
    ```
 
 5. **Start your Next.js app**:

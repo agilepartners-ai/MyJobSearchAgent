@@ -11,10 +11,8 @@ export interface AuthConfig {
 }
 
 export const getAuthConfig = (): AuthConfig => {
-  const provider = (process.env.NEXT_PUBLIC_AUTH_PROVIDER as AuthConfig['provider']) || 'supabase';
-  
   return {
-    provider,
+    provider: 'supabase',
     // Auth0
     auth0Domain: process.env.NEXT_PUBLIC_AUTH0_DOMAIN,
     auth0ClientId: process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID,

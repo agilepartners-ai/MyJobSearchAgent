@@ -76,7 +76,6 @@ supabase --version
    ```env
    NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key-from-status>
-   NEXT_PUBLIC_AUTH_PROVIDER=supabase
    ```
    
    Or use the `.env.example` file and copy the values from `supabase status`.
@@ -229,7 +228,6 @@ For production, you'll need to:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-production-anon-key
-   NEXT_PUBLIC_AUTH_PROVIDER=supabase
    ```
 
 ## Additional Resources

@@ -65,7 +65,6 @@ Create a `.env.local` file in the root directory and add your Supabase configura
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_AUTH_PROVIDER=supabase
 
 # For local development, first start Supabase:
 # supabase start
@@ -399,7 +398,6 @@ The project is configured for automatic deployment to Netlify:
 3. **Environment Variables**: Add your Supabase config to Netlify environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_AUTH_PROVIDER` (set to `supabase`)
    - `NEXT_PUBLIC_JSEARCH_API_KEY`
    - `NEXT_PUBLIC_JSEARCH_API_HOST`
 
