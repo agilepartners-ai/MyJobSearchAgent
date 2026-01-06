@@ -82,7 +82,7 @@ const Workflow: React.FC = () => {
       imageSrc: "/Step_4_KeepTrack_AI.png",
       title: "Read Emails & Auto-Update",
       description: "AI reads your emails to automatically update you on upcoming interviews and OA assignments, keeping you informed in real-time.",
-      isLocal: true
+      isLocal: false
     },
     {
       imageSrc: "/Step_4_KeepTrack_AI.png",
