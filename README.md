@@ -14,6 +14,17 @@ An AI-powered job search application built with NEXT_PUBLIC.js, React, and TypeS
 - **Responsive Design**: Modern UI built with Tailwind CSS
 - **Real-time Updates**: Live application status tracking
 
+## 📚 Documentation Index
+
+All documentation is located in the [`docs/`](./docs/) folder:
+
+- **[Quick Start Guide](./docs/QUICKSTART.md)** - Get up and running quickly with step-by-step setup instructions
+- **[Supabase Setup](./docs/SUPABASE_SETUP.md)** - Detailed guide for setting up Supabase locally and in production
+- **[Workflow Implementation](./docs/WORKFLOW_IMPLEMENTATION.md)** - Overview of the application workflow and user journey
+- **[Dependency Status](./docs/DEPENDENCY_STATUS.md)** - Current status and versions of project dependencies
+- **[CORS Configuration](./docs/README-CORS.md)** - CORS setup and troubleshooting guide
+- **[Version Notes](./docs/VERSION_NOTES.md)** - Release notes and version history
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 + TypeScript
@@ -98,7 +109,7 @@ supabase status
 # Access Supabase Studio at http://localhost:54323
 ```
 
-See `SUPABASE_SETUP.md` for detailed local setup instructions.
+See [`docs/SUPABASE_SETUP.md`](./docs/SUPABASE_SETUP.md) for detailed local setup instructions.
 
 ### 4. Run Development Server
 

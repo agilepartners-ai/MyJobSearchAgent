@@ -79,5 +79,5 @@ supabase logs
 - **Docker not running**: Start Docker Desktop first
 - **Need fresh start**: Run `supabase stop --no-backup && supabase start`
 
-For more details, see [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+For more details, see [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) in this docs folder.
 
