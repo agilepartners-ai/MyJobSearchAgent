@@ -286,7 +286,7 @@ export class SupabaseAuthProvider implements AuthProvider {
       } else if (event === 'SIGNED_OUT') {
         callback(null);
       } else {
-        callback(session?.user ? this.convertUser(session.user) : null);
+      callback(session?.user ? this.convertUser(session.user) : null);
       }
     });
 

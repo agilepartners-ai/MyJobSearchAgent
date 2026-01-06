@@ -519,18 +519,18 @@ const Dashboard: React.FC = () => {
         {/* Tab Content */}
         <div className="space-y-8">
           {activeTab === 'applications' && (
-            <ApplicationsTable
-              applications={[...applications, ...combinedListings].map(app => ({ ...app, updated_at: app.updated_at ?? '' }))}
-              searchTerm={searchTerm}
-              statusFilter={statusFilter}
-              onSearchTermChange={setSearchTerm}
-              onStatusFilterChange={setStatusFilter}
-              onEditApplication={handleEditApplication}
-              onViewJobDescription={handleViewJobDescription}
-              onDeleteApplication={handleDeleteApplication}
-              onUpdateApplicationStatus={handleUpdateApplicationStatus}
-              onLoadAIEnhanced={handleLoadAIEnhanced}
-            />
+          <ApplicationsTable
+            applications={[...applications, ...combinedListings].map(app => ({ ...app, updated_at: app.updated_at ?? '' }))}
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            onSearchTermChange={setSearchTerm}
+            onStatusFilterChange={setStatusFilter}
+            onEditApplication={handleEditApplication}
+            onViewJobDescription={handleViewJobDescription}
+            onDeleteApplication={handleDeleteApplication}
+            onUpdateApplicationStatus={handleUpdateApplicationStatus}
+            onLoadAIEnhanced={handleLoadAIEnhanced}
+          />
           )}
 
           {activeTab === 'interviews' && (

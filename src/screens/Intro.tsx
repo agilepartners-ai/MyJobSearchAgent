@@ -37,9 +37,7 @@ export const Intro: React.FC = () => {
               backgroundColor: 'rgba(0,0,0,0.3)',
             }}
             onMouseEnter={(e) => {
-              if (token) {
                 e.currentTarget.style.boxShadow = '0 0 15px rgba(34, 197, 254, 0.5)';
-              }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.boxShadow = 'none';

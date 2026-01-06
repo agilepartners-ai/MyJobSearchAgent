@@ -3,8 +3,8 @@
  * Centralized exports for all resume-related types and classes
  */
 
-export { ResumeDocument, ResumeDocumentSummary } from '../resumeDocument';
-export { WorkExperience } from '../workExperience';
-export { Education } from '../education';
-export { Certification } from '../certification';
+export type { ResumeDocument, ResumeDocumentSummary } from '../resumeDocument';
+export type { WorkExperience } from '../workExperience';
+export type { Education } from '../education';
+export type { Certification } from '../certification';
 

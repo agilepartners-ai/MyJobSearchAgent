@@ -64,25 +64,25 @@ export const useAuth = () => {
         
         // Now set up the listener
         unsubscribe = AuthService.onAuthStateChange(async (user) => {
-          setUser(user);
-          
-          if (user) {
-            try {
-              const profile = await SupabaseProfileService.getOrCreateProfile(
-                user.id, 
-                user.email || '', 
-                user.displayName || ''
-              );
-              setUserProfile(profile);
-            } catch (error) {
-              console.error("Failed to update user profile on auth change:", error);
-            }
-          } else {
-            setUserProfile(null);
-          }
-          
-          setLoading(false);
-        });
+      setUser(user);
+      
+      if (user) {
+        try {
+          const profile = await SupabaseProfileService.getOrCreateProfile(
+            user.id, 
+            user.email || '', 
+            user.displayName || ''
+          );
+          setUserProfile(profile);
+        } catch (error) {
+          console.error("Failed to update user profile on auth change:", error);
+        }
+      } else {
+        setUserProfile(null);
+      }
+      
+      setLoading(false);
+    });
       } catch (error) {
         console.error("Failed to set up auth state listener:", error);
       }
@@ -92,7 +92,7 @@ export const useAuth = () => {
 
     return () => {
       if (unsubscribe) {
-        unsubscribe();
+      unsubscribe();
       }
     };
   }, []);

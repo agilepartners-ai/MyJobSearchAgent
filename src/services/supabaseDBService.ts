@@ -17,7 +17,7 @@ export class SupabaseDBService {
     const parentTable = parentPath && pathParts.length > 2 ? this.convertPathToTableName(pathParts[pathParts.length - 3]) : null;
 
     // Add parent reference if it's a nested structure
-    const dataWithParent = { ...data };
+    const dataWithParent: Record<string, any> = { ...data };
     if (parentId && parentTable) {
       // Add foreign key reference (e.g., user_id for users/123/jobApplications)
       const foreignKey = `${parentTable.slice(0, -1)}_id`; // Remove 's' and add '_id'
