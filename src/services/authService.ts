@@ -77,50 +77,69 @@ export class AuthService {
   }
 
   static async initializeProvider() {
+    // If already initialized, return early
+    if (this.provider) {
+      return;
+    }
+
     try {
       const { getAuthConfig } = await import('../config/authConfig');
       const config = getAuthConfig();
       
       switch (config.provider) {
-        case 'firebase':
-          const { FirebaseAuthProvider } = await import('./auth/FirebaseAuthProvider');
-          this.setProvider(new FirebaseAuthProvider());
+        case 'supabase':
+          const { SupabaseAuthProvider } = await import('./auth/SupabaseAuthProvider');
+          this.setProvider(new SupabaseAuthProvider());
           break;
         case 'auth0':
           // TODO: Implement Auth0 provider
           throw new Error('Auth0 provider not implemented yet');
-        case 'supabase':
-          // TODO: Implement Supabase provider
-          throw new Error('Supabase provider not implemented yet');
         case 'custom':
           // TODO: Implement custom provider
           throw new Error('Custom provider not implemented yet');
         default:
-          throw new Error(`Unknown auth provider: ${config.provider}`);
+          // Default to Supabase
+          const { SupabaseAuthProvider: DefaultSupabaseAuthProvider } = await import('./auth/SupabaseAuthProvider');
+          this.setProvider(new DefaultSupabaseAuthProvider());
       }
     } catch (error) {
       console.error('Failed to initialize auth provider:', error);
-      // In development or during build, we can continue without auth
+      // In production, throw the error
       if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
         throw error;
       }
+      // In development, we can continue but log the error
+      // The provider will remain null and methods will throw when called
     }
   }
 
   // Delegate all methods to the current provider
   static async signUp(data: SignUpData): Promise<AuthUser> {
+    if (!this.provider) {
+      await this.initializeProvider();
+    }
     return this.getProvider().signUp(data);
   }
 
   static async signIn(data: SignInData): Promise<AuthUser> {
+    if (!this.provider) {
+      await this.initializeProvider();
+    }
     return this.getProvider().signIn(data);
   }
 
   static async signOut(): Promise<void> {
+    if (!this.provider) {
+      await this.initializeProvider();
+    }
     return this.getProvider().signOut();
   }
 
   static async getCurrentUser(): Promise<AuthUser | null> {
+    // Auto-initialize if not already initialized
+    if (!this.provider) {
+      await this.initializeProvider();
+    }
     return this.getProvider().getCurrentUser();
   }
 
@@ -157,6 +176,16 @@ export class AuthService {
   }
 
   static onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
+    // Auto-initialize if not already initialized (async, but we need to return unsubscribe immediately)
+    if (!this.provider) {
+      this.initializeProvider().then(() => {
+        if (this.provider) {
+          this.getProvider().onAuthStateChange(callback);
+        }
+      }).catch(console.error);
+      // Return a no-op unsubscribe until provider is initialized
+      return () => {};
+    }
     return this.getProvider().onAuthStateChange(callback);
   }
 

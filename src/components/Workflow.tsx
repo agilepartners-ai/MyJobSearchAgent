@@ -6,9 +6,34 @@ interface WorkflowStepProps {
   title: string;
   description: string;
   index: number;
+  isLocal?: boolean;
 }
 
-const WorkflowStep: React.FC<WorkflowStepProps> = ({ imageSrc, title, description, index }) => {
+const WorkflowStep: React.FC<WorkflowStepProps> = ({ imageSrc, title, description, index, isLocal = false }) => {
+  if (isLocal) {
+    return (
+      <div className="relative bg-gradient-to-b from-green-600/20 to-emerald-600/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-green-500/40 hover:border-green-400/60 transition-all hover:-translate-y-1 hover:shadow-green-500/20 hover:shadow-xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative">
+            <img 
+              src={imageSrc} 
+              alt={title} 
+              className="w-24 h-24 sm:w-36 sm:h-36 object-contain mb-4"
+            />
+            <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-gray-800 shadow-lg">
+              LOCAL
+            </div>
+          </div>
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{title}</h3>
+          <p className="text-sm sm:text-base text-gray-300">{description}</p>
+          <div className="absolute -left-4 sm:-left-8 top-1/2 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-500/30 border-2 border-gray-800">
+            {index}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative bg-gradient-to-b from-purple-600/20 to-blue-600/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-transparent hover:border-blue-500/30 transition-all hover:-translate-y-1 hover:shadow-blue-500/10 hover:shadow-xl">
       <div className="flex flex-col items-center text-center">
@@ -32,28 +57,51 @@ const Workflow: React.FC = () => {
     {
       imageSrc: "/Step_1_JobSearch_AI.png",
       title: "Search Jobs",
-      description: "Our AI scans thousands of job postings to find perfect matches for your skills and preferences."
+      description: "Our AI scans thousands of job postings to find perfect matches for your skills and preferences.",
+      isLocal: false
     },
     {
       imageSrc: "/Step_2_EditeResume_AI.png",
       title: "Customize Resume",
-      description: "With one click tailor your resume and generate a cover letter for each job description."
+      description: "With one click tailor your resume and generate a cover letter for each job description.",
+      isLocal: false
+    },
+    {
+      imageSrc: "/Step_3_FillApplication_AI.png",
+      title: "Parse Workday Forms",
+      description: "AI automatically parses and understands Workday application forms on your local machine for seamless processing.",
+      isLocal: true
     },
     {
       imageSrc: "/Step_3_FillApplication_AI.png",
       title: "Apply Instantly",
-      description: "Submit your applications effortlessly using autofill for each position on career websites."
+      description: "Submit your applications effortlessly using autofill for each position on career websites.",
+      isLocal: true
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "Read Emails & Auto-Update",
+      description: "AI reads your emails to automatically update you on upcoming interviews and OA assignments, keeping you informed in real-time.",
+      isLocal: false
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "Schedule Meetups",
+      description: "Connect your calendar and let AI schedule Coffee Chats and Interviews (Technical/Behavioral) by finding the best times for you.",
+      isLocal: false
+    },
+    {
+      imageSrc: "/Step_4_KeepTrack_AI.png",
+      title: "AI Message & Reply",
+      description: "AI automatically writes professional messages and replies to employers on your behalf, saving you time and ensuring timely responses.",
+      isLocal: false
     },
     {
       imageSrc: "/Step_4_KeepTrack_AI.png",
       title: "Track Progress",
-      description: "Monitor and keep track of all your applications in one dashboard with real-time status updates."
+      description: "Monitor and keep track of all your applications in one dashboard with real-time status updates.",
+      isLocal: false
     },
-    {
-      imageSrc: "/Step_5_MockInterview_AI.png",
-      title: "Interview Prep",
-      description: "Practice with AI-powered mock interviews tailored to the specific job and company."
-    }
   ];
 
   return (
@@ -86,7 +134,7 @@ const Workflow: React.FC = () => {
         <div className="relative max-w-6xl mx-auto">
           {/* Workflow steps */}
           <div className="px-2 sm:px-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-6 lg:gap-8 mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-6 lg:gap-8 mb-20">
               {workflowSteps.map((step, index) => (
                 <WorkflowStep
                   key={index}
@@ -94,6 +142,7 @@ const Workflow: React.FC = () => {
                   title={step.title}
                   description={step.description}
                   index={index + 1}
+                  isLocal={step.isLocal}
                 />
               ))}
             </div>

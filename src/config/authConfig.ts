@@ -1,6 +1,5 @@
 export interface AuthConfig {
-  provider: 'firebase' | 'auth0' | 'supabase' | 'custom';
-  // Firebase config (already in environment)
+  provider: 'supabase' | 'auth0' | 'custom';
   // Auth0 config
   auth0Domain?: string;
   auth0ClientId?: string;
@@ -12,10 +11,8 @@ export interface AuthConfig {
 }
 
 export const getAuthConfig = (): AuthConfig => {
-  const provider = (process.env.NEXT_PUBLIC_AUTH_PROVIDER as AuthConfig['provider']) || 'firebase';
-  
   return {
-    provider,
+    provider: 'supabase',
     // Auth0
     auth0Domain: process.env.NEXT_PUBLIC_AUTH0_DOMAIN,
     auth0ClientId: process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, LogOut, User, Settings, ChevronDown, Menu, X, Crown } from 'lucide-react';
-import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { AuthService } from '../../services/authService';
 import UpgradeModal from './UpgradeModal';
 
 interface UserProfileData {
@@ -31,8 +31,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const handleSignOut = async () => {
     try {
-      const auth = getAuth();
-      await signOut(auth);
+      await AuthService.signOut();
       router.push('/login');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -49,11 +48,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       const originalBeforeUnload = window.onbeforeunload;
       window.onbeforeunload = null;
       
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
+      const currentUser = await AuthService.getCurrentUser();
 
-      if (currentUser && currentUser.uid) {
-        const paymentUrl = `https://pay.rev.cat/sandbox/evfhfhevsehbykku/${currentUser.uid}`;
+      if (currentUser && currentUser.id) {
+        const paymentUrl = `https://pay.rev.cat/sandbox/evfhfhevsehbykku/${currentUser.id}`;
         // Open in same tab for better user experience
         window.location.href = paymentUrl;
       } else {

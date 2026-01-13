@@ -1,13 +1,7 @@
 import { atom } from "jotai";
 
-// Get API key from environment variable
-const getApiKeyFromEnv = (): string | null => {
-  const apiKey = process.env.NEXT_PUBLIC_TAVUS_API_KEY;
-  return apiKey || null;
-};
-
-// Atom to store the API token from environment
-export const apiTokenAtom = atom<string | null>(getApiKeyFromEnv());
+// Atom to store the API token (no longer using Tavus)
+export const apiTokenAtom = atom<string | null>(null);
 
 // Atom to track if token is being validated
 export const isValidatingTokenAtom = atom(false);

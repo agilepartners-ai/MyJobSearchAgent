@@ -11,7 +11,7 @@ interface Settings {
 }
 
 const getInitialSettings = (): Settings => {
-  const savedSettings = localStorage.getItem('tavus-settings');
+  const savedSettings = localStorage.getItem('app-settings');
   if (savedSettings) {
     return JSON.parse(savedSettings);
   }

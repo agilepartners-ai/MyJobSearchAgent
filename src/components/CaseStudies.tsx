@@ -50,13 +50,6 @@ const CaseStudies: React.FC = () => {
       results: "5x increase in interview callbacks, 40% salary increase"
     },
     {
-      image: "https://images.pexels.com/photos/5439381/pexels-photo-5439381.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-      category: "Mock Interview & Q&A Practice",
-      title: "Conquering Interview Anxiety",
-      description: "Michael overcame his interview nerves through our AI-powered mock interview system and comprehensive Q&A preparation, landing his dream tech role.",
-      results: "Went from 0% to 80% interview success rate"
-    },
-    {
       image: "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
       category: "Job Dashboard & Role Insights",
       title: "Smart Job Discovery Success",

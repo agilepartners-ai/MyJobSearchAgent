@@ -1,4 +1,4 @@
-import { FirebaseDBService } from './firebaseDBService';
+import { SupabaseDBService } from './supabaseDBService';
 
 export interface UserProfileData {
   // Basic Information
@@ -59,11 +59,11 @@ export class ProfileService {
   }
 
   static async getUserProfile(userId: string): Promise<UserProfileData | null> {
-    return FirebaseDBService.read<UserProfileData>(this.basePath(userId));
+    return SupabaseDBService.read<UserProfileData>(this.basePath(userId));
   }
 
   static async updateUserProfile(userId: string, profileData: Partial<UserProfileData>): Promise<void> {
-    return FirebaseDBService.update(this.basePath(userId), profileData); // ✅ Already correct
+    return SupabaseDBService.update(this.basePath(userId), profileData);
   }
 
   static async getOrCreateProfile(userId: string, email: string, fullName?: string): Promise<UserProfileData> {
@@ -74,9 +74,7 @@ export class ProfileService {
         fullName: fullName || '',
         subscription_status: 'free',
       };
-      // ❌ WRONG: await FirebaseDBService.create(...); ← this causes "document path must be even"
-      // ✅ FIXED:
-      await FirebaseDBService.set(this.basePath(userId), profile);
+      await SupabaseDBService.set(this.basePath(userId), profile);
     }
     return profile;
   }

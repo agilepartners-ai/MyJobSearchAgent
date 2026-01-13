@@ -1,13 +1,11 @@
 import React from "react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
-import { Play, Lock } from "lucide-react";
+import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiTokenAtom } from "@/store/tokens";
 
 export const Intro: React.FC = () => {
   const [, setScreenState] = useAtom(screenAtom);
-  const [token] = useAtom(apiTokenAtom);
 
   const handleClick = () => {
     setScreenState({ currentScreen: "instructions" });
@@ -29,34 +27,24 @@ export const Intro: React.FC = () => {
             Experience face-to-face conversation with AI so real, it feels human.
           </p>
 
-          {!token && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-center">
-              <p className="text-sm text-red-200">
-                API key not configured. Please set NEXT_PUBLIC_TAVUS_API_KEY in your environment variables.
-              </p>
-            </div>
-          )}
 
           <Button 
             onClick={handleClick}
-            className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-2 text-sm text-white transition-all duration-200 hover:text-primary mt-4 disabled:opacity-50"
-            disabled={!token}
+            className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-2 text-sm text-white transition-all duration-200 hover:text-primary mt-4"
             style={{
               height: '44px',
               transition: 'all 0.2s ease-in-out',
               backgroundColor: 'rgba(0,0,0,0.3)',
             }}
             onMouseEnter={(e) => {
-              if (token) {
                 e.currentTarget.style.boxShadow = '0 0 15px rgba(34, 197, 254, 0.5)';
-              }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            {token ? <Play className="size-4" /> : <Lock className="size-4" />}
-            {token ? "Start Demo" : "API Key Required"}
+            <Play className="size-4" />
+            Start Demo
           </Button>
         </div>
       </div>

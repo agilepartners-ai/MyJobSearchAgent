@@ -4,8 +4,7 @@
   base = "/"
 
 [build.environment]
-  NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "24"
   CI = "false"
 
 # Optional: Custom headers for security

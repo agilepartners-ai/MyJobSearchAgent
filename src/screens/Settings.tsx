@@ -9,7 +9,6 @@ import { settingsAtom, settingsSavedAtom } from "@/store/settings";
 import { screenAtom } from "@/store/screens";
 import { X } from "lucide-react";
 import * as React from "react";
-import { apiTokenAtom } from "@/store/tokens";
 
 // Button Component
 const Button = React.forwardRef<
@@ -112,7 +111,6 @@ Select.displayName = "Select";
 export const Settings: React.FC = () => {
   const [settings, setSettings] = useAtom(settingsAtom);
   const [, setScreenState] = useAtom(screenAtom);
-  const [token] = useAtom(apiTokenAtom);
   const [, setSettingsSaved] = useAtom(settingsSavedAtom);
 
   const languages = [
@@ -132,7 +130,7 @@ export const Settings: React.FC = () => {
 
   const handleClose = () => {
     setScreenState({ 
-      currentScreen: token ? "instructions" : "intro" 
+      currentScreen: "intro" 
     });
   };
 
@@ -146,7 +144,7 @@ export const Settings: React.FC = () => {
     };
     
     // Save to localStorage
-    localStorage.setItem('tavus-settings', JSON.stringify(updatedSettings));
+    localStorage.setItem('app-settings', JSON.stringify(updatedSettings));
     
     // Update the store with the new settings object
     const store = getDefaultStore();
@@ -156,7 +154,7 @@ export const Settings: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Check both localStorage and store
-    const storedSettings = localStorage.getItem('tavus-settings');
+    const storedSettings = localStorage.getItem('app-settings');
     const storeSettings = store.get(settingsAtom);
     
     console.log('Settings in localStorage:', JSON.parse(storedSettings || '{}'));
@@ -289,22 +287,6 @@ export const Settings: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>API Token Status</Label>
-                <div className="p-3 bg-black/20 rounded-md border border-input">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${token ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <span className="text-sm font-mono">
-                      {token ? 'API key configured via environment' : 'API key not configured'}
-                    </span>
-                  </div>
-                  {!token && (
-                    <p className="text-xs text-gray-400 mt-2 font-mono">
-                      Set NEXT_PUBLIC_TAVUS_API_KEY in your .env file
-                    </p>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
 

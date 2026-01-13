@@ -19,7 +19,6 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
   const proFeatures = [
     { icon: <Zap className="w-4 h-4" />, text: 'Unlimited job applications tracking' },
     { icon: <Star className="w-4 h-4" />, text: 'AI-powered resume optimization' },
-    { icon: <Crown className="w-4 h-4" />, text: 'Advanced interview preparation' },
     { icon: <Shield className="w-4 h-4" />, text: 'Priority customer support' },
     { icon: <CreditCard className="w-4 h-4" />, text: 'Advanced analytics and insights' },
     { icon: <Check className="w-4 h-4" />, text: 'Custom job alerts and notifications' },

@@ -1,253 +1,172 @@
 # My Job Search Agent 🤖
 
-This is not part of Hackathorn. It is for production release
-
-An AI-powered job search application built with NEXT_PUBLIC.js, React, and TypeScript that helps users find, apply to, and manage job applications efficiently.
+An AI-powered job search platform that automates your entire job application process. Built with Next.js, React, and TypeScript.
 
 ## 🚀 Features
 
-- **AI-Enhanced Job Search**: Intelligent job matching based on user preferences
-- **Resume Optimization**: AI-powered resume enhancement and template selection
-- **Application Tracking**: Comprehensive dashboard to track job applications
-- **Profile Management**: User profile creation and management
-- **Authentication**: Secure login/registration with Firebase
-- **Responsive Design**: Modern UI built with Tailwind CSS
-- **Real-time Updates**: Live application status tracking
+### Core Capabilities
+
+- **AI-Enhanced Job Search**: Intelligent job matching based on your skills and preferences
+- **Resume Optimization**: AI-powered resume enhancement and template selection tailored to each job
+- **Workday Form Parsing**: Automatically parses and understands Workday application forms (runs locally)
+- **Automated Applications**: Submit applications effortlessly with AI-powered autofill (runs locally)
+- **Email Reading & Auto-Update**: AI reads your emails to automatically update you on upcoming interviews and OA assignments (remote service)
+- **Calendar Integration**: Connect your calendar to schedule Coffee Chats and Interviews (Technical/Behavioral)
+- **AI Messaging**: Automatically writes professional messages and replies to employers on your behalf (runs locally)
+- **Application Tracking**: Comprehensive dashboard to track all your applications with real-time status updates
+- **Profile Management**: User profile creation and management with personalized recommendations
+
+### Architecture
+
+- **Online Platform**: Database tracks your application status and learns about you to provide personalized recommendations
+- **Local Processing**: Workday parsing, application filling, and AI messaging run securely on your local machine
+- **Remote Services**: Email reading, calendar integration, and job search run on our servers
+
+## 📚 Documentation Index
+
+All documentation is located in the [`docs/`](./docs/) folder:
+
+- **[Quick Start Guide](./docs/QUICKSTART.md)** - Get up and running quickly with step-by-step setup instructions
+- **[Supabase Setup](./docs/SUPABASE_SETUP.md)** - Detailed guide for setting up Supabase locally and in production
+- **[Workflow Implementation](./docs/WORKFLOW_IMPLEMENTATION.md)** - Overview of the application workflow and user journey
+- **[Dependency Status](./docs/DEPENDENCY_STATUS.md)** - Current status and versions of project dependencies
+- **[CORS Configuration](./docs/README-CORS.md)** - CORS setup and troubleshooting guide
+- **[Version Notes](./docs/VERSION_NOTES.md)** - Release notes and version history
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 + TypeScript
-- **Framework**: NEXT_PUBLIC.js
+- **Framework**: Next.js 16
 - **Styling**: Tailwind CSS
-- **Authentication**: Firebase
-- **Routing**: React Router DOM
+- **Authentication**: Supabase Auth
+- **Database**: Supabase PostgreSQL
+- **Storage**: Supabase Storage
 - **Icons**: Lucide React
 - **Date Handling**: date-fns
 - **Phone Validation**: libphonenumber-js
-- **Deployment**: Netlify
+- **State Management**: Redux Toolkit
+- **Deployment**: Next.js (supports Vercel, Netlify, etc.)
 
 ## 📋 Prerequisites
 
 Before running this project, make sure you have:
 
-- **Node.js** (version 18 or higher)
-- **npm** or **yarn** package manager
+- **Node.js** (version 24 or higher)
+- **npm** (version 10 or higher)
 - **Git** for version control
-- **Firebase account** (for authentication)
+- **Supabase CLI** (for local development) - Install via `npm install -g supabase`
 
 ## ⚡ Quick Start
 
 ### 1. Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/agilepartners-ai/MyJobSearchAgent.git
-
-# Navigate to project directory
+git clone https://github.com/codejedi-ai/MyJobSearchAgent.git
 cd MyJobSearchAgent
 ```
 
 ### 2. Install Dependencies
 
 ```bash
-# Install all dependencies
 npm install
-
-
 ```
 
 ### 3. Environment Setup
 
-Create a `.env` file in the root directory and add your Firebase configuration:
+Create a `.env.local` file in the root directory with only these 3 essential variables:
 
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_JSEARCH_API_KEY=Your jsearch api
-NEXT_PUBLIC_JSEARCH_API_HOST=your host api
+# Production-like Supabase Configuration
+# Only these three variables are needed - matches production setup
+
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
+
+#### Get Your Local Supabase Credentials
+
+For local development, start Supabase and get your credentials:
+
+```bash
+# Start Supabase locally
+supabase start
+
+# Get connection details (copy the values to .env.local)
+supabase status
+```
+
+The output will show:
+- **Project URL** → Use for `NEXT_PUBLIC_SUPABASE_URL`
+- **Publishable (anon key)** → Use for `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- **Secret (service role key)** → Use for `SUPABASE_SERVICE_ROLE_KEY`
+
+See [`docs/SUPABASE_SETUP.md`](./docs/SUPABASE_SETUP.md) for detailed setup instructions.
 
 ### 4. Run Development Server
 
 ```bash
-# Start development server
 npm run dev
-
-# Or using yarn
-yarn dev
 ```
 
-The application will be available at `http://localhost:5173`
+The application will be available at `http://localhost:3000`
 
 ## 🏗️ Build and Deployment
 
 ### Build for Production
 
 ```bash
-# Create production build
 npm run build
-
-# Or using yarn
-yarn build
 ```
 
-### Preview Production Build
+### Start Production Server
 
 ```bash
-# Preview the production build locally
-npm run preview
-
-# Or using yarn
-yarn preview
+npm start
 ```
+
+The production server will be available at `http://localhost:3000`
+
+### Deploy to Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Import your repository in [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Deploy automatically on every push
+
+### Deploy to Other Platforms
+
+The app is a standard Next.js application and can be deployed to:
+- **Netlify**: Configure build command as `npm run build` and publish directory as `.next`
+- **AWS Amplify**: Follow Next.js deployment guide
+- **Docker**: Use Next.js Dockerfile patterns
 
 ## 📁 Project Structure
 
 ```
 MyJobSearchAgent/
-├── public/                 # Static assets
+├── docs/                    # Documentation
+├── public/                  # Static assets
 ├── src/
-│   ├── components/        # React components
-│   │   ├── auth/         # Authentication components
-│   │   ├── dashboard/    # Dashboard components
-│   │   ├── forms/        # Form components
-│   │   └── applications/ # Job application components
-│   ├── hooks/            # Custom React hooks
-│   ├── lib/              # External library configurations
-│   ├── services/         # API and service functions
-│   ├── types/            # TypeScript type definitions
-│   ├── utils/            # Utility functions
-│   └── test/             # Test files
-├── package.json          # Dependencies and scripts
-├── NEXT_PUBLIC.config.js        # NEXT_PUBLIC.js configuration
-├── tailwind.config.js    # Tailwind CSS configuration
-├── tsconfig.json         # TypeScript configuration
-└── netlify.toml          # Netlify deployment configuration
-```
-
-## 🌿 Git Workflow & CLI Commands
-
-### Branch Management
-
-```bash
-# Check current branch
-git branch
-
-# Create and switch to new feature branch
-git checkout -b feature/your-feature-name
-
-# Switch to existing branch
-git checkout branch-name
-
-# Create new branch from current branch
-git branch new-branch-name
-
-# Delete local branch
-git branch -d branch-name
-
-# Delete remote branch
-git push origin --delete branch-name
-```
-
-### Basic Git Operations
-
-```bash
-# Check status
-git status
-
-# Add files to staging
-git add .                    # Add all files
-git add filename            # Add specific file
-git add *.js               # Add all JS files
-
-# Commit changes
-git commit -m "Your commit message"
-
-# Push to remote branch
-git push origin branch-name
-
-# Pull latest changes
-git pull origin branch-name
-# push from branch if errors 
-git push --set-upstream origin branch-name
-
-# Fetch all branches
-git fetch --all
-```
-
-### Working with Feature Branches
-
-```bash
-# 1. Create feature branch
-git checkout -b feature/job-search-enhancement
-
-# 2. Make your changes and commit
-git add .
-git commit -m "feat: add AI-powered job matching algorithm"
-
-# 3. Push feature branch to remote
-git push origin feature/job-search-enhancement
-
-# 4. Create Pull Request (via GitHub/GitLab interface)
-
-# 5. After PR approval, merge to main
-git checkout main
-git pull origin main
-git merge feature/job-search-enhancement
-
-# 6. Push updated main
-git push origin main
-
-# 7. Delete feature branch (optional)
-git branch -d feature/job-search-enhancement
-git push origin --delete feature/job-search-enhancement
-```
-
-### Deployment to Main Branch
-
-```bash
-# Complete workflow for pushing to main
-git checkout main
-git pull origin main
-git merge your-feature-branch
-git push origin main
-
-# Or using rebase for cleaner history
-git checkout main
-git pull origin main
-git checkout your-feature-branch
-git rebase main
-git checkout main
-git merge your-feature-branch
-git push origin main
-```
-
-### Advanced Git Commands
-
-```bash
-# Stash changes temporarily
-git stash
-git stash pop
-
-# Reset to previous commit
-git reset --hard HEAD~1
-
-# View commit history
-git log --oneline
-
-# Create tag
-git tag v1.0.0
-git push origin v1.0.0
-
-# Cherry-pick specific commit
-git cherry-pick commit-hash
-
-# Rebase interactive (clean up commits)
-git rebase -i HEAD~3
+│   ├── components/         # React components
+│   │   ├── auth/          # Authentication components
+│   │   ├── dashboard/     # Dashboard components
+│   │   ├── forms/         # Form components
+│   │   └── pages/         # Page components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # External library configurations
+│   ├── services/          # API and service functions
+│   ├── store/             # Redux store and slices
+│   ├── types/             # TypeScript type definitions
+│   └── utils/             # Utility functions
+├── supabase/              # Supabase configuration and migrations
+│   ├── functions/         # Edge Functions
+│   └── migrations/        # Database migrations
+├── .env.local             # Environment variables (not in git)
+├── next.config.mjs        # Next.js configuration
+├── package.json           # Dependencies and scripts
+├── tailwind.config.js     # Tailwind CSS configuration
+└── tsconfig.json          # TypeScript configuration
 ```
 
 ## 🔧 Development Commands
@@ -262,169 +181,34 @@ npm run dev
 # Build for production
 npm run build
 
-# Preview production build
-npm run preview
+# Start production server
+npm start
 
 # Run linter
 npm run lint
 
 # Run linter with auto-fix
-npm run lint --fix
+npm run lint -- --fix
 ```
 
 ## 🔄 Application Workflow
 
-```mermaid
-graph TD
-    A[User Registration] --> B[Email Verification]
-    B --> C[Profile Setup]
-    C --> D[Job Preferences]
-    D --> E[Dashboard Access]
-    
-    E --> F[Job Search]
-    E --> G[Resume Upload]
-    E --> H[Application Tracking]
-    
-    F --> I[AI Job Matching]
-    I --> J[Job Application]
-    J --> K[Application Status]
-    K --> L[Interview Scheduling]
-    
-    G --> M[AI Resume Enhancement]
-    M --> N[Template Selection]
-    N --> O[Optimized Resume]
-    
-    H --> P[Application List]
-    P --> Q[Status Updates]
-    Q --> R[Analytics Dashboard]
-    
-    style A fill:#e1f5fe
-    style E fill:#e8f5e8
-    style J fill:#fff3e0
-    style O fill:#f3e5f5
-```
-
-
-
-## 🔄 Development Workflow
-
-```mermaid
-graph LR
-    A[Local Development] --> B[Feature Branch]
-    B --> C[Code & Test]
-    C --> D[Commit Changes]
-    D --> E[Push to Remote]
-    E --> F[Create PR]
-    F --> G[Code Review]
-    G --> H[Merge to Main]
-    H --> I[Deploy to Netlify]
-    
-    style A fill:#e3f2fd
-    style F fill:#e8f5e8
-    style I fill:#fff3e0
-```
-
-## 🔄 Git Branching Strategy
-
-```mermaid
-graph TD
-    A[main branch] --> B[feature/auth]
-    A --> C[feature/dashboard]
-    A --> D[feature/ai-enhancement]
-    
-    B --> E[Initial commit]
-    B --> F[Add authentication]
-    B --> G[Add user registration]
-    G --> H[Merge to main]
-    
-    C --> I[Create dashboard]
-    C --> J[Add job search]
-    J --> K[Merge to main]
-    
-    D --> L[Add AI features]
-    L --> M[Merge to main]
-    
-    H --> N[Release v1.0.0]
-    K --> N
-    M --> N
-    
-    style A fill:#e8f5e8
-    style H fill:#fff3e0
-    style K fill:#fff3e0
-    style M fill:#fff3e0
-    style N fill:#ffebee
-```
-
-## 🚀 Deployment Configuration
-
-### Deploy to Netlify
-
-The project is configured for automatic deployment to Netlify:
-
-1. **Connect Repository**: Link your GitHub repository to Netlify
-2. **Build Settings**: 
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-   - Node version: 18
-3. **Environment Variables**: Add your Firebase config to Netlify environment variables:
-   - `NEXT_PUBLIC_FIREBASE_API_KEY`
-   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-   - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-   - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-   - `NEXT_PUBLIC_FIREBASE_APP_ID`
-   - `NEXT_PUBLIC_JSEARCH_API_KEY`
-   - `NEXT_PUBLIC_JSEARCH_API_HOST`
-
-### Manual Deployment
-
-```bash
-# Build and deploy manually
-npm run build
-npx netlify deploy --prod --dir=dist
-```
-
-## 🧪 Testing
-
-```bash
-# Run tests (when configured)
-npm test
-
-# Run tests in watch mode
-npm test -- --watch
-
-# Run tests with coverage
-npm test -- --coverage
-```
-
-## 🔍 Debugging
-
-```bash
-# Start with debugging enabled
-npm run dev -- --debug
-
-# Check for TypeScript errors
-npx tsc --noEmit
-
-# Analyze bundle size
-npm run build -- --analyze
-```
-
-## 🚀 Performance Optimization
-
-- **Code Splitting**: Implemented with React.lazy()
-- **Image Optimization**: WebP format with fallbacks
-- **Bundle Analysis**: Use `npm run build -- --analyze`
-- **Caching**: Service worker for offline capabilities
-- **Minification**: Automatic with NEXT_PUBLIC.js build
+1. **Search Jobs** - AI scans thousands of job postings to find perfect matches
+2. **Customize Resume** - One-click resume tailoring and cover letter generation
+3. **Parse Workday Forms** - AI parses Workday application forms (local)
+4. **Apply Instantly** - Automated application submission with autofill (local)
+5. **Read Emails & Auto-Update** - AI reads emails and updates on interviews/OA assignments (remote)
+6. **Schedule Meetups** - Calendar integration for Coffee Chats and Interviews (Technical/Behavioral)
+7. **AI Message & Reply** - Automatic message writing and replies to employers (local)
+8. **Track Progress** - Monitor all applications in one dashboard with real-time updates
 
 ## 🔒 Security
 
-- **Environment Variables**: All sensitive data in `.env`
-- **Firebase Security Rules**: Configured for user data protection
+- **Environment Variables**: Sensitive data stored in `.env.local` (not committed to git)
+- **Supabase Row Level Security (RLS)**: Configured for user data protection
 - **HTTPS**: Enforced in production
-- **Content Security Policy**: Configured in Netlify
-- **Input Validation**: Zod schema validation
+- **Input Validation**: Zod schema validation throughout
+- **Local Processing**: Sensitive operations (Workday parsing, application filling) run on your machine
 
 ## 📱 Browser Support
 
@@ -449,19 +233,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 If you encounter any issues:
 
-1. Check the [Issues](../../issues) page
+1. Check the [Issues](https://github.com/codejedi-ai/MyJobSearchAgent/issues) page
 2. Create a new issue with detailed description
 3. Include error logs and environment details
-
-## 🔮 Future Enhancements
-
-- [ ] AI-powered interview preparation
-- [ ] Salary negotiation assistant
-- [ ] Company culture matching
-- [ ] Network analysis and recommendations
-- [ ] Mobile application
-- [ ] LinkedIn integration
-- [ ] Email automation for follow-ups
 
 ---
 

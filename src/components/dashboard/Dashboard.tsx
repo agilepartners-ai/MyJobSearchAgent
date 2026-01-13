@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import ApplicationModal from './ApplicationModal';
 import ProfileModal from './ProfileModal';
 import JobPreferencesModal from './JobPreferencesModal';
-import { JobApplication } from '../../services/firebaseJobApplicationService';
-import { FirebaseJobApplicationService } from '../../services/firebaseJobApplicationService';
+import { JobApplication } from '../../services/supabaseJobApplicationService';
+import { SupabaseJobApplicationService } from '../../services/supabaseJobApplicationService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToastContext } from '../ui/ToastProvider';
 import { AuthService } from '../../services/authService';
@@ -60,8 +60,8 @@ const Dashboard: React.FC = () => {
       setError('');
       
       const [applicationsData, statsData] = await Promise.all([
-        FirebaseJobApplicationService.getUserApplications(user.id),
-        FirebaseJobApplicationService.getApplicationStats(user.id)
+        SupabaseJobApplicationService.getUserApplications(user.id),
+        SupabaseJobApplicationService.getApplicationStats(user.id)
       ]);
       
       setApplications(applicationsData);
@@ -122,10 +122,10 @@ const Dashboard: React.FC = () => {
       
       if (editingApplication) {
         // Update existing application
-        await FirebaseJobApplicationService.updateApplication(user.id, editingApplication.id, applicationData);
+        await SupabaseJobApplicationService.updateApplication(user.id, editingApplication.id, applicationData);
       } else {
         // Add new application
-        await FirebaseJobApplicationService.addApplication(user.id, applicationData);
+        await SupabaseJobApplicationService.addApplication(user.id, applicationData);
       }
       
       setShowModal(false);
@@ -144,7 +144,7 @@ const Dashboard: React.FC = () => {
 
     try {
       setError('');
-            await FirebaseJobApplicationService.deleteApplication(user.id, applicationId);
+            await SupabaseJobApplicationService.deleteApplication(user.id, applicationId);
       await loadApplications(); // Reload data
     } catch (err: any) {
       setError(err.message || 'Failed to delete application');

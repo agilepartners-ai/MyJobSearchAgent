@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Bot, Send, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { FirebaseJobPreferencesService, JobPreferences } from '../../services/firebaseJobPreferencesService';
+import { SupabaseJobPreferencesService, JobPreferences } from '../../services/supabaseJobPreferencesService';
 import { useToastContext } from '../ui/ToastProvider';
 
 interface ApplyJobsForm {
@@ -63,7 +63,7 @@ const ApplyJobsModal: React.FC<ApplyJobsModalProps> = ({
     if (!user) return;
 
     try {
-      const preferences = await FirebaseJobPreferencesService.getUserJobPreferences(user.id);
+      const preferences = await SupabaseJobPreferencesService.getUserJobPreferences(user.id);
       if (preferences) {
         setJobPreferences(preferences);
         const jobTitles = preferences.job_titles || [];
